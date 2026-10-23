@@ -1,0 +1,158 @@
+# GitHub Pages: production site from `main`, plus a preview per branch.
+#
+# Layout of the `gh-pages` branch (the Pages source):
+#   /                      -> build of `main`
+#   /preview/<branch>/     -> build of every other branch (removed when the branch is deleted)
+#   /preview/              -> index of live previews
+#
+# The app uses a hash router and a relative Vite base ('./'), so the same build
+# works at the site root and under /preview/<branch>/ with no per-branch config.
+name: Pages
+
+on:
+  push:
+    branches-ignore: [gh-pages]
+  delete:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# Every job commits to the same gh-pages branch, so serialize them.
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+env:
+  PAGES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+
+jobs:
+  deploy:
+    if: github.event_name != 'delete'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Resolve destination
+        id: dest
+        run: |
+          branch="${GITHUB_REF_NAME}"
+          slug="$(printf '%s' "$branch" | tr -c 'A-Za-z0-9._-' '-')"
+          if [ "$branch" = "${{ github.event.repository.default_branch }}" ]; then
+            echo "dir=" >> "$GITHUB_OUTPUT"
+            echo "url=${PAGES_URL}/" >> "$GITHUB_OUTPUT"
+          else
+            echo "dir=preview/${slug}" >> "$GITHUB_OUTPUT"
+            echo "url=${PAGES_URL}/preview/${slug}/" >> "$GITHUB_OUTPUT"
+          fi
+          echo "slug=${slug}" >> "$GITHUB_OUTPUT"
+
+      - name: Check out gh-pages
+        run: |
+          git fetch origin gh-pages --depth=1 2>/dev/null \
+            && git worktree add site origin/gh-pages \
+            || { git worktree add --detach site && cd site && git checkout --orphan gh-pages && git rm -rfq . ; }
+
+      - name: Copy build into place
+        env:
+          DIR: ${{ steps.dest.outputs.dir }}
+        run: |
+          cd site
+          if [ -z "$DIR" ]; then
+            # Production: replace everything except the previews.
+            find . -mindepth 1 -maxdepth 1 ! -name preview ! -name .git -exec rm -rf {} +
+            cp -R ../dist/. .
+          else
+            rm -rf "$DIR"
+            mkdir -p "$DIR"
+            cp -R ../dist/. "$DIR/"
+          fi
+          touch .nojekyll
+          # Rebuild the preview index.
+          mkdir -p preview
+          {
+            echo '<!doctype html><meta charset="utf-8"><title>Branch previews</title>'
+            echo '<style>body{font:16px/1.5 system-ui;margin:2rem auto;max-width:40rem;padding:0 1rem}</style>'
+            echo '<h1>Branch previews</h1><p><a href="../">Production (main)</a></p><ul>'
+            for d in preview/*/; do
+              [ -d "$d" ] || continue
+              n="$(basename "$d")"
+              echo "<li><a href=\"./$n/\">$n</a></li>"
+            done
+            echo '</ul>'
+          } > preview/index.html
+
+      - name: Commit and push
+        run: |
+          cd site
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to deploy."
+            exit 0
+          fi
+          git commit -q -m "deploy: ${GITHUB_REF_NAME} @ ${GITHUB_SHA::7}"
+          git push origin HEAD:gh-pages
+
+      - name: Summary
+        run: echo "Deployed to ${{ steps.dest.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment preview URL on the open PR
+        if: steps.dest.outputs.dir != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          URL: ${{ steps.dest.outputs.url }}
+        run: |
+          pr="$(gh pr list --head "$GITHUB_REF_NAME" --state open --json number --jq '.[0].number' || true)"
+          [ -n "$pr" ] || { echo "No open PR for $GITHUB_REF_NAME"; exit 0; }
+          marker='<!-- pages-preview -->'
+          body="${marker}
+          **Preview:** ${URL}
+          Built from ${GITHUB_SHA::7}. Updates on every push; removed when the branch is deleted."
+          existing="$(gh api "repos/${GITHUB_REPOSITORY}/issues/${pr}/comments" --paginate \
+            --jq ".[] | select(.body | startswith(\"${marker}\")) | .id" | head -n1)"
+          if [ -n "$existing" ]; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${existing}" -f body="$body" >/dev/null
+          else
+            gh pr comment "$pr" --body "$body"
+          fi
+
+  cleanup:
+    if: github.event_name == 'delete' && github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Remove the branch's preview
+        run: |
+          slug="$(printf '%s' "${{ github.event.ref }}" | tr -c 'A-Za-z0-9._-' '-')"
+          [ -d "preview/$slug" ] || { echo "No preview for $slug"; exit 0; }
+          rm -rf "preview/$slug"
+          {
+            echo '<!doctype html><meta charset="utf-8"><title>Branch previews</title>'
+            echo '<style>body{font:16px/1.5 system-ui;margin:2rem auto;max-width:40rem;padding:0 1rem}</style>'
+            echo '<h1>Branch previews</h1><p><a href="../">Production (main)</a></p><ul>'
+            for d in preview/*/; do
+              [ -d "$d" ] || continue
+              n="$(basename "$d")"
+              echo "<li><a href=\"./$n/\">$n</a></li>"
+            done
+            echo '</ul>'
+          } > preview/index.html
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "cleanup: remove preview for ${{ github.event.ref }}"
+          git push origin HEAD:gh-pages
