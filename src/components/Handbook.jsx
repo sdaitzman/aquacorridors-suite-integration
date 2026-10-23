@@ -1,7 +1,7 @@
 // The AquaCorridors Handbook: sidebar navigation mirroring the vault folders,
 // one page rendered from its markdown, cross-links to the Planner, and an embed helper.
 import { useEffect, useMemo, useState } from 'react'
-import { href, navigate, absoluteUrl } from '../lib/router.js'
+import { href, navigate, absoluteUrl, useMediaQuery } from '../lib/router.js'
 import { pages, pageBySlug, navTree, searchPages, isPractice, isThreat, circleArt, cpNumber } from '../lib/handbook.js'
 import { crosswalk, savePlannerState, getPlannerRun, plannerQuery, loadPlannerData, computeResults, isFormValid } from '../lib/planner.js'
 import HandbookContent from './HandbookContent.jsx'
@@ -37,8 +37,9 @@ function Nav({ tree, current }) {
   const [q, setQ] = useState('')
   const hits = searchPages(q)
   const ancestors = pageBySlug[current]?.folder || []
-  return (
-    <nav className="nav" aria-label="Handbook contents">
+  const narrow = useMediaQuery('(max-width: 900px)')
+  const body = (
+    <>
       <div className="search"><input type="search" placeholder="Search page titles…" value={q} onChange={e => setQ(e.target.value)} aria-label="Search the Handbook" /></div>
       {q.trim() ? (
         <>
@@ -52,8 +53,17 @@ function Nav({ tree, current }) {
           {tree.folders.map(f => <Folder key={f.name} node={f} current={current} ancestors={ancestors} depth={0} />)}
         </>
       )}
-    </nav>
+    </>
   )
+  if (narrow) {
+    return (
+      <details className="nav navbox" key={current}>
+        <summary><span>Handbook contents</span><span className="cnt">{pages.length} pages</span></summary>
+        <nav aria-label="Handbook contents" style={{ marginTop: 8 }}>{body}</nav>
+      </details>
+    )
+  }
+  return <nav className="nav" aria-label="Handbook contents">{body}</nav>
 }
 
 function countPages(node) { return node.pages.length + node.folders.reduce((s, f) => s + countPages(f), 0) }

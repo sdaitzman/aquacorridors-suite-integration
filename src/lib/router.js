@@ -42,3 +42,17 @@ export function absoluteUrl(path, query) {
 }
 
 export const BASE = import.meta.env.BASE_URL // './' in production builds
+
+/** True while the viewport matches a CSS media query (updates live). */
+export function useMediaQuery(q) {
+  const get = () => typeof window !== 'undefined' && window.matchMedia(q).matches
+  const [m, setM] = useState(get)
+  useEffect(() => {
+    const mq = window.matchMedia(q)
+    const on = () => setM(mq.matches)
+    mq.addEventListener('change', on)
+    on()
+    return () => mq.removeEventListener('change', on)
+  }, [q])
+  return m
+}
