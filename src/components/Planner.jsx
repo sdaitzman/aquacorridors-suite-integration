@@ -40,6 +40,15 @@ export default function Planner({ route, step }) {
     if (step === 2 && !isValid) navigate('/planner', plannerQuery(form, checked))
   }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { headingRef.current?.focus({ preventScroll: true }) }, [step])
+  // A tapped-open popover closes on any click outside it or on Escape.
+  useEffect(() => {
+    if (!openInfo) return
+    const onDoc = e => { if (!e.target.closest('.info-wrap')) setOpenInfo(null) }
+    const onKey = e => { if (e.key === 'Escape') setOpenInfo(null) }
+    document.addEventListener('click', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('click', onDoc); document.removeEventListener('keydown', onKey) }
+  }, [openInfo])
 
   if (!data) return <div className="loading"><span className="spinner" />Loading planner data…</div>
 
@@ -151,22 +160,26 @@ export default function Planner({ route, step }) {
                     const slug = crosswalk.concerns[c]
                     const isOn = checked.includes(c)
                     const open = openInfo === c
+                    const popId = `pop-${slug || c.replace(/\W+/g, '-')}`
                     return (
-                      <div key={c}>
-                        <label className={`check ${isOn ? 'on' : ''}`} title={data.concernDescriptions[c] || ''}>
+                      <div className={`check-row ${isOn ? 'on' : ''}`} key={c}>
+                        <label className="check">
                           <input type="checkbox" checked={isOn} onChange={() => toggle(c)} value={c} />
                           <span className="txt">{c}</span>
-                          <button type="button" className="info" aria-expanded={open} aria-label={`About ${c}`} onClick={e => { e.preventDefault(); setOpenInfo(open ? null : c) }}>i</button>
                         </label>
-                        {open && (
-                          <div className="defn">
+                        {/* The info button lives outside the label so it never toggles the checkbox. */}
+                        <div className={`info-wrap ${open ? 'open' : ''}`} onMouseLeave={() => { if (open) setOpenInfo(null) }}>
+                          <button type="button" className="info" aria-expanded={open} aria-controls={popId} aria-label={`About ${c}`}
+                            onClick={() => setOpenInfo(open ? null : c)}
+                            onKeyDown={e => { if (e.key === 'Escape') { setOpenInfo(null); e.currentTarget.blur() } }}>i</button>
+                          <div className="pop" id={popId} role="tooltip">
                             <div>{data.concernDescriptions[c] || definitionOf(pageBySlug[slug]) || 'No definition available.'}</div>
                             <div className="between">
                               <span className="src">{data.concernDescriptions[c] ? 'NRCS resource concern definition' : 'From the Handbook'}</span>
                               {slug && <a className="pill xs sand" href={href('/handbook/' + slug)}>Read in the Handbook →</a>}
                             </div>
                           </div>
-                        )}
+                        </div>
                       </div>
                     )
                   })}
