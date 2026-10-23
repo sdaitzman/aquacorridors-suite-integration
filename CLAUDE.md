@@ -21,6 +21,11 @@ mono eyebrows, illustration "deco" art; palette shifted to river/moss (see `src/
 - No invented copy about NRCS programs, practices or scores. Facts on screen come from the data files,
   the handbook, or the original tool's text.
 
+## Planner flow
+Three-step stepper: `#/planner` (About you) → `#/planner/concerns` → `#/planner/results`. State rides in the
+query string and `sessionStorage` (`getPlannerRun()` in `src/lib/planner.js`); `savePlannerState` fires the
+`aquacorridors:planner` event so the tool bar updates. Form rules are the original tool's — don't loosen them.
+
 ## Routing
 Hash router (`src/lib/router.js`). `?embed=page` renders a handbook page with no chrome/sidebar;
 `?embed=1` keeps the sidebar. `href()` carries the embed flag through internal links.

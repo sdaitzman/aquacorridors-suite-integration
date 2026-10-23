@@ -1,9 +1,9 @@
 // The AquaCorridors Handbook: sidebar navigation mirroring the vault folders,
 // one page rendered from its markdown, cross-links to the Planner, and an embed helper.
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { href, navigate, absoluteUrl } from '../lib/router.js'
 import { pages, pageBySlug, navTree, searchPages, isPractice, isThreat, circleArt, cpNumber } from '../lib/handbook.js'
-import { crosswalk, loadPlannerState, savePlannerState } from '../lib/planner.js'
+import { crosswalk, savePlannerState, getPlannerRun, plannerQuery, loadPlannerData, computeResults, isFormValid } from '../lib/planner.js'
 import HandbookContent from './HandbookContent.jsx'
 import { Toast, useToast, copyText } from './Shell.jsx'
 
@@ -80,16 +80,20 @@ function Page({ page, embed }) {
   const plannerPractice = isPractice(page) ? practiceBySlug[page.slug] : null
   const cp = cpNumber(page)
 
+  const run = getPlannerRun()
+  const inSelection = !!concern && run.concerns.includes(concern)
+  // Add this concern to the saved selection. If the form was already completed,
+  // go straight to the results; otherwise open the picker with it pre-checked.
   const addToPlanner = () => {
-    const prev = loadPlannerState() || { concerns: [], form: {} }
-    const concerns = prev.concerns.includes(concern) ? prev.concerns : [...prev.concerns, concern]
-    savePlannerState({ ...prev, concerns })
-    navigate('/planner', { ...Object.fromEntries(Object.entries(prev.form || {}).filter(([, v]) => v)), concerns: concerns.join(':') })
+    const concerns = inSelection ? run.concerns : [...run.concerns, concern]
+    savePlannerState({ form: run.form, concerns })
+    navigate(run.complete ? '/planner/results' : isFormValid(run.form) ? '/planner/concerns' : '/planner', plannerQuery(run.form, concerns))
   }
+  const rank = usePracticeRank(plannerPractice, run)
   const pageUrl = absoluteUrl('/handbook/' + page.slug)
   const embedUrl = absoluteUrl('/handbook/' + page.slug, { embed: 'page' })
   const embedNavUrl = absoluteUrl('/handbook/' + page.slug, { embed: '1' })
-  const snippet = u => `<iframe src="${u}" title="AquaCorridors Handbook — ${page.plainTitle}" width="100%" height="800" style="border:0;border-radius:16px" loading="lazy"></iframe>`
+  const snippet = u => `<iframe id="aquacorridors" src="${u}" title="AquaCorridors Handbook — ${page.plainTitle}" width="100%" height="800" style="border:0;border-radius:16px" loading="lazy"></iframe>\n<script>addEventListener('message',e=>{if(e.data&&e.data.type==='aquacorridors:height')document.getElementById('aquacorridors').style.height=e.data.height+'px'})</script>`
   const copy = async (t, what) => setToast((await copyText(t)) ? `${what} copied` : 'Could not copy')
 
   return (
@@ -116,10 +120,10 @@ function Page({ page, embed }) {
       {showEmbed && !embed && (
         <div className="embed-box">
           <div className="between"><b className="small">Embed this page in another site</b><button className="pill xs" type="button" onClick={() => setShowEmbed(false)}>Close</button></div>
-          <div className="small muted">Page only (no site chrome, no sidebar):</div>
-          <textarea readOnly rows={3} value={snippet(embedUrl)} onFocus={e => e.target.select()} />
-          <div className="small muted">Whole Handbook with navigation, no site chrome:</div>
-          <textarea readOnly rows={3} value={snippet(embedNavUrl)} onFocus={e => e.target.select()} />
+          <div className="small muted">The script line lets the frame grow to fit the page; drop it for a fixed 800px frame. Page only (no sidebar):</div>
+          <textarea readOnly rows={4} value={snippet(embedUrl)} onFocus={e => e.target.select()} />
+          <div className="small muted">Whole Handbook with navigation:</div>
+          <textarea readOnly rows={4} value={snippet(embedNavUrl)} onFocus={e => e.target.select()} />
           <div className="cluster">
             <button className="pill xs river" type="button" onClick={() => copy(snippet(embedUrl), 'Snippet')}>Copy page-only snippet</button>
             <button className="pill xs" type="button" onClick={() => copy(snippet(embedNavUrl), 'Snippet')}>Copy with-navigation snippet</button>
@@ -130,14 +134,31 @@ function Page({ page, embed }) {
 
       {concern && (
         <div className="planner-link">
-          <div className="msg"><b>This is one of the resource concerns in the AquaCorridors Planner.</b> Add it to your selection to see every practice that addresses it alongside your other concerns, scored with CPPE data.</div>
-          <button className="pill river" type="button" onClick={addToPlanner}>Add “{concern}” to my Planner →</button>
+          {inSelection ? (
+            <>
+              <div className="msg"><b>This concern is in your Planner selection</b> ({run.concerns.length} concern{run.concerns.length === 1 ? '' : 's'} chosen).</div>
+              <a className="pill river" href={href(run.complete ? '/planner/results' : '/planner', run.query)}>{run.complete ? 'View my Planner results →' : 'Back to the Planner →'}</a>
+            </>
+          ) : (
+            <>
+              <div className="msg"><b>This is one of the resource concerns in the AquaCorridors Planner.</b> {run.complete ? `Add it to your ${run.concerns.length} selected concern${run.concerns.length === 1 ? '' : 's'} and see the updated results.` : 'Add it to your selection to see every practice that addresses it alongside your other concerns, scored with CPPE data.'}</div>
+              <button className="pill river" type="button" onClick={addToPlanner}>{run.complete ? 'Add to my Planner results →' : `Add “${concern}” to my Planner →`}</button>
+            </>
+          )}
         </div>
       )}
       {plannerPractice && (
         <div className="planner-link">
-          <div className="msg"><b>CP {cp} appears in the AquaCorridors Planner.</b> Choose the resource concerns on your land and the Planner shows where this practice ranks among the others that address them.</div>
-          <a className="pill river" href={href('/planner')}>Open the Planner →</a>
+          {run.complete ? (
+            <div className="msg">
+              <b>In your Planner results</b>{rank === null ? ' (loading…)' : rank
+                ? `, CP ${cp} ranks #${rank.position} of ${rank.total} practices for your ${run.concerns.length} concern${run.concerns.length === 1 ? '' : 's'} (combined score ${rank.score}).`
+                : `, CP ${cp} does not appear: the CPPE data gives it no effect on the ${run.concerns.length} concern${run.concerns.length === 1 ? '' : 's'} you selected.`}
+            </div>
+          ) : (
+            <div className="msg"><b>CP {cp} appears in the AquaCorridors Planner.</b> Choose the resource concerns on your land and the Planner shows where this practice ranks among the others that address them.</div>
+          )}
+          <a className="pill river" href={href(run.complete ? '/planner/results' : '/planner', run.query)}>{run.complete ? 'View my Planner results →' : 'Open the Planner →'}</a>
         </div>
       )}
 
@@ -145,4 +166,21 @@ function Page({ page, embed }) {
       <Toast msg={toast} />
     </article>
   )
+}
+
+/** Where a planner practice lands in the saved run's results (null while loading, false if absent). */
+function usePracticeRank(practiceName, run) {
+  const [rank, setRank] = useState(null)
+  useEffect(() => {
+    if (!practiceName || !run.complete) return
+    let live = true
+    loadPlannerData().then(data => {
+      if (!live) return
+      const r = computeResults(data, run.concerns)
+      const i = r.practices.indexOf(practiceName)
+      setRank(i < 0 ? false : { position: i + 1, total: r.practices.length, score: r.scores[practiceName] })
+    })
+    return () => { live = false }
+  }, [practiceName, run.complete, run.concerns.join(':')])
+  return rank
 }

@@ -169,11 +169,31 @@ export function readPlannerState(query) {
 export function plannerQuery(form, concerns) {
   const q = {}
   for (const k of FORM_KEYS) if (form[k]) q[k] = form[k]
-  q.concerns = concerns.join(':')
+  if (concerns.length) q.concerns = concerns.join(':')
   return q
 }
+/** Same rule as the original tool: State, County and Organization are required. */
+export const isFormValid = form => !!(form && form.state && form.county && form.organization)
+
+/**
+ * The planner "run" saved for this browser session. `complete` means the user
+ * finished the form and chose at least one concern, so other parts of the site
+ * can link straight back to their results instead of the empty picker.
+ */
+export function getPlannerRun() {
+  const saved = loadPlannerState() || { form: {}, concerns: [] }
+  const form = { ...Object.fromEntries(FORM_KEYS.map(k => [k, ''])), ...(saved.form || {}) }
+  const concerns = Array.isArray(saved.concerns) ? saved.concerns : []
+  const complete = isFormValid(form) && concerns.length > 0
+  return { form, concerns, complete, query: plannerQuery(form, concerns) }
+}
+
 const STORE = 'aquacorridors-planner'
-export function savePlannerState(state) { try { sessionStorage.setItem(STORE, JSON.stringify(state)) } catch { /* ignore */ } }
+export const PLANNER_EVENT = 'aquacorridors:planner'
+export function savePlannerState(state) {
+  try { sessionStorage.setItem(STORE, JSON.stringify(state)) } catch { /* storage may be blocked inside third-party iframes */ }
+  window.dispatchEvent(new Event(PLANNER_EVENT))
+}
 export function loadPlannerState() { try { return JSON.parse(sessionStorage.getItem(STORE) || 'null') } catch { return null } }
 
 export const US_STATES = [['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['DC','District Of Columbia'],['FL','Florida'],['GA','Georgia'],['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],['MD','Maryland'],['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],['MS','Mississippi'],['MO','Missouri'],['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],['NM','New Mexico'],['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],['NONE','None']]

@@ -19,8 +19,23 @@ export default function Heatmap({ results, highlighted = [], onPractice, onConce
   const legendRef = useRef(null)
   const [tip, setTip] = useState(null)
 
+  const wrapRef = useRef(null)
+  const [containerW, setContainerW] = useState(0)
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setContainerW(e.contentRect.width))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   useEffect(() => {
     const { pairs, practices, concerns } = results
+    // Narrow screens: shrink the label column and wrap practice names onto two lines.
+    const narrow = containerW > 0 && containerW < SIDE_LABEL_OFFSET + 2 * HEATMAP_COLUMN_WIDTH
+    const sideW = narrow ? Math.max(150, Math.round(containerW * 0.48)) : SIDE_LABEL_OFFSET
+    const labelFont = narrow ? 12 : 15
+    const rowH = narrow ? 36 : HEATMAP_ROW_HEIGHT // room for two-line labels
     const side = d3.select(sideRef.current); side.selectAll('*').remove()
     const grid = d3.select(gridRef.current); grid.selectAll('*').remove()
     const legend = d3.select(legendRef.current); legend.selectAll('*').remove()
@@ -28,7 +43,7 @@ export default function Heatmap({ results, highlighted = [], onPractice, onConce
 
     let heatmapWidth = HEATMAP_COLUMN_WIDTH * concerns.length
     if (heatmapWidth < 300) heatmapWidth = 350 // minimum width for very few columns
-    const heatmapHeight = HEATMAP_ROW_HEIGHT * practices.length
+    const heatmapHeight = rowH * practices.length
 
     const svg = grid.append('svg').attr('width', heatmapWidth).attr('height', heatmapHeight + TOP_LABEL_OFFSET).append('g')
 
@@ -41,14 +56,15 @@ export default function Heatmap({ results, highlighted = [], onPractice, onConce
       .append('title').text(d => `${d} — open in the Handbook`)
 
     const y = d3.scaleBand().range([0, heatmapHeight]).domain(practices).padding(0.05)
-    const sidebarSvg = side.append('svg').attr('width', SIDE_LABEL_OFFSET).attr('height', heatmapHeight + TOP_LABEL_OFFSET)
-    const yAxisObj = sidebarSvg.append('g').style('font-size', 15).attr('transform', `translate(${SIDE_LABEL_OFFSET},${TOP_LABEL_OFFSET})`)
+    const sidebarSvg = side.append('svg').attr('width', sideW).attr('height', heatmapHeight + TOP_LABEL_OFFSET)
+    const yAxisObj = sidebarSvg.append('g').style('font-size', labelFont).attr('transform', `translate(${sideW},${TOP_LABEL_OFFSET})`)
       .call(d3.axisLeft(y).tickSize(0))
     yAxisObj.select('.domain').remove()
-    yAxisObj.selectAll('.tick text')
+    const yLabels = yAxisObj.selectAll('.tick text')
       .attr('class', d => `ylab${highlighted.includes(d) ? ' hl' : ''}`)
       .text(t => displayName(t)) // strip trailing (IRA)
-      .on('click', (e, d) => onPractice?.(d))
+    if (narrow) yLabels.call(wrapText, sideW - 12, true)
+    yLabels.on('click', (e, d) => onPractice?.(d))
       .append('title').text(d => `${displayName(d)} — open in the Handbook`)
 
     // values
@@ -81,10 +97,10 @@ export default function Heatmap({ results, highlighted = [], onPractice, onConce
     cap(legendHorizontalOffset - 8, legendVerticalOffset + legendBoxHeight / 2 + 10, 'has detrimental effect', 'end')
     cap(legendHorizontalOffset + 8 * (legendBoxWidth + 5), legendVerticalOffset + legendBoxHeight / 2 - 10, 'Conservation practice', 'start')
     cap(legendHorizontalOffset + 8 * (legendBoxWidth + 5), legendVerticalOffset + legendBoxHeight / 2 + 10, 'has protective effect', 'start')
-  }, [results, highlighted, onPractice, onConcern])
+  }, [results, highlighted, onPractice, onConcern, containerW])
 
   return (
-    <div className="heat">
+    <div className="heat" ref={wrapRef}>
       <div className="legend"><div ref={legendRef} /></div>
       <div className="scroller">
         <div className="side" ref={sideRef} />
@@ -101,13 +117,15 @@ export default function Heatmap({ results, highlighted = [], onPractice, onConce
 }
 
 // Adapted from https://gist.github.com/mbostock/7555321 (ISC, Observable Inc.)
-function wrapText(text, width) {
+// `center` stacks the lines around the text's baseline (for row labels) instead of
+// hanging them above it (for the column labels along the top axis).
+function wrapText(text, width, center = false) {
   text.each(function () {
     const t = d3.select(this)
     const words = t.text().split(/\s+/).reverse()
     let word, line = [], lineNumber = 0
-    const lineHeight = 1.1, y = t.attr('y'), dy = parseFloat(t.attr('dy'))
-    let tspan = t.text(null).append('tspan').attr('x', 0).attr('y', y).attr('dy', dy + 'em')
+    const lineHeight = 1.1, y = t.attr('y') ?? 0, x = t.attr('x') || 0, dy = parseFloat(t.attr('dy')) || 0
+    let tspan = t.text(null).append('tspan').attr('x', x).attr('y', y).attr('dy', dy + 'em')
     word = words.pop()
     while (word) {
       line.push(word)
@@ -116,15 +134,15 @@ function wrapText(text, width) {
         line.pop()
         tspan.text(line.join(' '))
         line = [word]
-        tspan = t.append('tspan').attr('x', 0).attr('y', y).attr('dy', ++lineNumber * lineHeight + dy + 'em').text(word)
+        tspan = t.append('tspan').attr('x', x).attr('y', y).attr('dy', ++lineNumber * lineHeight + dy + 'em').text(word)
       }
       word = words.pop()
     }
     const tspans = t.selectAll('tspan')
     const h = 1.05
+    const n = tspans.size()
     tspans.each(function (d, i) {
-      let ddy = i * h
-      ddy -= (tspans.size() - 1) * h
+      const ddy = center ? (i - (n - 1) / 2) * h + dy : i * h - (n - 1) * h
       d3.select(this).attr('y', y).attr('dy', ddy + 'em')
     })
   })

@@ -25,14 +25,42 @@ npm run preview
 | Route | What |
 |---|---|
 | `#/` | Suite overview |
-| `#/planner` | Concern picker (state in the query string: `name, state, county, organization, role, concerns=a:b:c`) |
-| `#/planner/results?concerns=…` | Practices for those concerns |
+| `#/planner` | Step 1 · About you (Name, State*, County*, Organization*, Role — same required fields and validation as the original) |
+| `#/planner/concerns` | Step 2 · Resource concerns (redirects to step 1 if the form is incomplete) |
+| `#/planner/results?concerns=…` | Step 3 · Practices for those concerns. All steps carry state in the query string: `name, state, county, organization, role, concerns=a:b:c` |
 | `#/handbook` | Handbook home |
 | `#/handbook/<slug>` | One Handbook page, e.g. `#/handbook/cp-391-riparian-forest-buffer` |
 | `…?embed=page` | That page alone — no site chrome, no sidebar (for iframes) |
 | `…?embed=1` | Handbook with its sidebar, no site chrome |
 
 Hash routing means the built site works from any sub-path or inside an iframe.
+
+## Embedding (the intended use)
+
+Like the current AquaCorridors pages on the Landscape Partnership portal, this app is meant to be
+framed into a host page that supplies the real site header, navigation and footer. The app's own
+chrome is therefore a single slim tool bar (tool name + Planner/Handbook/Overview links) and a
+one-line credit; `?embed=1` removes even those, and `?embed=page` also removes the Handbook sidebar.
+
+When framed, the app posts its document height to the parent on every change, so the host can size
+the iframe instead of showing a scrollbar inside a scrollbar:
+
+```html
+<iframe id="aquacorridors" src="https://HOST/PATH/#/planner" width="100%" height="900" style="border:0"></iframe>
+<script>
+  addEventListener('message', e => {
+    if (e.data && e.data.type === 'aquacorridors:height')
+      document.getElementById('aquacorridors').style.height = e.data.height + 'px'
+  })
+</script>
+```
+
+The message is `{ type: 'aquacorridors:height', height, hash }`. Every Handbook page's **Embed**
+button generates this snippet for that page. Use `#/planner` for a Planner-only page and
+`#/handbook` for a Handbook-only page, mirroring the portal's current separate pages.
+
+The Data Layer Library and Mapper are not part of this prototype; the overview shows them as
+muted placeholders linking to the portal.
 
 ## Where the content comes from (and how to update it)
 
@@ -59,8 +87,15 @@ Plant, CP 642 Water Well).
   scores across chosen concerns; the colour scale, legend and label text of the heatmap; the CSV export.
 - The "How to Interpret This Graph" text.
 
-What changed: the "About you" form is optional (there is no backend to log it to), the top three
-practices are highlighted, and names are clickable links into the Handbook.
+What changed: the flow is a three-step stepper (About you → Resource concerns → Practices) instead of
+one long page; the form fields, required rules and validation messages are the originals. There is no
+backend, so the form is kept only in the link and in `sessionStorage` (the original logged it to
+DynamoDB). The top three practices are highlighted, and names are clickable links into the Handbook.
+
+A completed run (valid form + at least one concern) is remembered for the browser session: the tool
+bar's **Planner results** link, Handbook threat pages ("Add to my Planner results") and practice pages
+("CP 391 ranks #4 of 33 practices for your concerns") all point back at it, and revisiting any step
+shows the saved answers. **Reset** on step 1 clears everything.
 
 ## Layout
 

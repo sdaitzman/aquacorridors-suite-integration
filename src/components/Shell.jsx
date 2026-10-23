@@ -1,42 +1,48 @@
 import { useEffect, useState } from 'react'
 import { href, BASE } from '../lib/router.js'
+import { getPlannerRun, PLANNER_EVENT } from '../lib/planner.js'
 
-export function TopBar({ route }) {
+// Slim tool bar: the host page (Landscape Partnership portal) supplies the site
+// header, navigation and footer, so this only names the tool and cross-links.
+export function ToolBar({ route }) {
   const top = route.parts[0] || ''
+  const name = top === 'planner' ? 'Planner' : top === 'handbook' ? 'Handbook' : 'Tool Suite'
   const cls = k => (k === top ? 'active' : '')
+  const run = usePlannerRun()
+  const plannerHref = run.complete ? href('/planner/results', run.query) : href('/planner')
   return (
-    <header className="topbar">
+    <div className="toolbar">
       <a className="brand" href={href('/')}>
         <img src={`${BASE}art/wlfw-logo-black.png`} alt="Working Lands for Wildlife" />
-        <span className="wm"><b>AquaCorridors</b><span>Working Lands for Wildlife · Tool Suite</span></span>
+        <span><b>AquaCorridors</b> {name}</span>
       </a>
       <span className="spacer" />
-      <nav aria-label="Tools">
-        <a className={cls('')} href={href('/')}>Overview</a>
-        <a className={cls('planner')} href={href('/planner')}>Planner</a>
+      <nav aria-label="AquaCorridors tools">
+        <a className={cls('planner')} href={plannerHref} title={run.complete ? 'Your Planner results' : 'Open the Planner'}>{run.complete ? 'Planner results' : 'Planner'}</a>
         <a className={cls('handbook')} href={href('/handbook')}>Handbook</a>
-        <a href="https://archive.landscapepartnership.org/networks/working-lands-for-wildlife/landscapes-wildlife/landscapes/aquatics/maps-and-data/aquacorridors-tool-suite/aquacorridors-data-layer-library/aquacorridor-data-library" target="_blank" rel="noopener">Data Layer Library ↗</a>
-        <a href="https://archive.landscapepartnership.org/networks/working-lands-for-wildlife/landscapes-wildlife/landscapes/aquatics/maps-and-data/aquacorridors-tool-suite/aquacorridors-mapper/aquacorridors-mapper" target="_blank" rel="noopener">Mapper ↗</a>
+        <a className={cls('')} href={href('/')}>Overview</a>
       </nav>
-    </header>
+    </div>
   )
+}
+
+/** Re-renders whenever the saved planner run changes (same tab). */
+function usePlannerRun() {
+  const [run, setRun] = useState(getPlannerRun)
+  useEffect(() => {
+    const on = () => setRun(getPlannerRun())
+    window.addEventListener(PLANNER_EVENT, on)
+    window.addEventListener('hashchange', on)
+    return () => { window.removeEventListener(PLANNER_EVENT, on); window.removeEventListener('hashchange', on) }
+  }, [])
+  return run
 }
 
 export function Footer() {
   return (
     <footer className="footer">
-      <div className="brand">
-        <img src={`${BASE}art/wlfw-logo-white.png`} alt="" />
-        <div>
-          <div><b>AquaCorridors Tool Suite</b> · Working Lands for Wildlife</div>
-          <div style={{ opacity: .75 }}>Planner data: USDA NRCS Conservation Practice Physical Effects (CPPE). Handbook content: the AquaCorridors Handbook (Ferguson Lynch).</div>
-        </div>
-      </div>
-      <div className="credit">
-        <span>Illustrations by</span>
-        <img src={`${BASE}art/erick-signature.png`} alt="Erick Ingraham" />
-      </div>
-      <div><a href="https://www.landscapepartnership.org/networks/working-lands-for-wildlife/landscapes-wildlife/landscapes/aquatics" target="_blank" rel="noopener">Landscape Partnership · Aquatics ↗</a></div>
+      <span>Planner data: USDA NRCS Conservation Practice Physical Effects (CPPE) · Handbook: the AquaCorridors Handbook</span>
+      <span className="credit">Illustrations by <img src={`${BASE}art/erick-signature.png`} alt="Erick Ingraham" /></span>
     </footer>
   )
 }

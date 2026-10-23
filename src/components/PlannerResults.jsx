@@ -7,6 +7,7 @@ import { loadPlannerData, readPlannerState, computeResults, topPractices, displa
 import { pageBySlug, definitionOf, circleArtForCp } from '../lib/handbook.js'
 import Heatmap from './Heatmap.jsx'
 import HandbookContent from './HandbookContent.jsx'
+import Stepper from './Stepper.jsx'
 import { Toast, useToast, copyText } from './Shell.jsx'
 
 const HANDBOOK_LANDING = '/handbook'
@@ -38,14 +39,15 @@ export default function PlannerResults({ route }) {
   if (!chosen.length) {
     return (
       <section className="section">
-        <div className="panel sand"><div className="ptitle">No concerns selected</div><p className="small">Pick at least one resource concern to see conservation practices.</p><div><a className="pill river" href={href('/planner')}>← Back to the Planner</a></div></div>
+        <Stepper current={3} query={plannerQuery(form, chosen)} reachable={() => true} />
+        <div className="panel sand"><div className="ptitle">No concerns selected</div><p className="small">Pick at least one resource concern to see conservation practices.</p><div><a className="pill river" href={href('/planner/concerns', plannerQuery(form, chosen))}>← Choose resource concerns</a></div></div>
       </section>
     )
   }
   if (!data) return <div className="loading"><span className="spinner" />Loading planner data…</div>
 
   const unknown = chosen.filter(c => !crosswalk.concerns[c])
-  const editHref = href('/planner', plannerQuery(form, chosen))
+  const editHref = href('/planner/concerns', plannerQuery(form, chosen))
   const copyLink = async () => setToast((await copyText(absoluteUrl('/planner/results', plannerQuery(form, chosen)))) ? 'Link copied' : 'Could not copy — use the address bar')
   const practiceInfo = name => {
     const x = crosswalk.practices[name]
@@ -56,10 +58,11 @@ export default function PlannerResults({ route }) {
 
   return (
     <>
-      <section className="section" style={{ paddingTop: 10 }}>
+      <section className="section" style={{ paddingTop: 6 }}>
+        <Stepper current={3} query={plannerQuery(form, chosen)} reachable={() => true} />
         <div className="between">
           <div className="cluster">
-            <a className="pill sand" href={editHref}>← Edit concerns</a>
+            <a className="pill sand" href={editHref}>← Back: resource concerns</a>
             <button className="pill" type="button" onClick={copyLink}>Copy link</button>
             <button className="pill" type="button" onClick={() => downloadCsv(results.pairs)}><span className="ico">⤓</span> Download (CSV)</button>
           </div>
@@ -68,7 +71,7 @@ export default function PlannerResults({ route }) {
 
         <div className="result-head">
           <div className="stack" style={{ gap: 10, flex: '1 1 460px' }}>
-            <div className="eyebrow">AquaCorridors Planner · step 2 of 2{form.name ? ` · for ${form.name}` : ''}{form.state && form.state !== 'NONE' ? ` · ${form.county ? form.county + ' County, ' : ''}${form.state}` : ''}</div>
+            <div className="eyebrow">AquaCorridors Planner · step 3 of 3{form.name ? ` · for ${form.name}` : ''}{form.state && form.state !== 'NONE' ? ` · ${form.county ? form.county + ' County, ' : ''}${form.state}` : ''}</div>
             <h1 style={{ fontSize: 'clamp(28px,4vw,44px)' }}>NRCS Conservation Practices that Address Your Resource Concerns</h1>
             <div className="cluster" aria-label="Selected concerns">
               {chosen.map(c => crosswalk.concerns[c]
@@ -127,7 +130,7 @@ export default function PlannerResults({ route }) {
         <Heatmap results={results} highlighted={highlighted} onPractice={openPractice} onConcern={openConcern} />
         <div className="between">
           <button className="pill sand" type="button" onClick={() => downloadCsv(results.pairs)}><span className="ico">⤓</span> Download (CSV)</button>
-          <a className="pill" href={editHref}>← Change your concerns</a>
+          <a className="pill" href={editHref}>← Back: resource concerns</a>
         </div>
       </section>
 
