@@ -1,0 +1,243 @@
+{
+  "concerns": {
+    "Sheet and Rill Erosion": "sheet-and-rill-erosion",
+    "Wind Erosion": "wind-erosion",
+    "Ephemeral Gully Erosion": "ephemeral-gully-erosion",
+    "Classic Gully Erosion": "classic-gully-erosion",
+    "Bank Erosion from Streams, Shorelines or Water Conveyance Channels": "bank-erosion-from-streams-shorelines-or-water-conveyance-channels",
+    "Subsidence": "subsidence",
+    "Compaction": "compaction",
+    "Organic Matter Depletion": "organic-matter-depletion",
+    "Concentration of Salts or other Chemicals": "concentration-of-salts-or-other-chemicals",
+    "Soil Organism Habitat Loss or Degradation": "soil-organism-habitat-degradation",
+    "Aggregate Instability": "aggregate-instability",
+    "Ponding and Flooding": "ponding-and-flooding",
+    "Seasonal High Water Table": "seasonal-high-water-table",
+    "Seeps": "seeps",
+    "Drifted Snow": "drifted-snow",
+    "Naturally Available Moisture Use": "naturally-available-moisture-use",
+    "Surface Water Depletion": "surface-water-depletion",
+    "Groundwater Depletion": "groundwater-depletion",
+    "Inefficient Irrigation Water Use": "inefficient-irrigation-water-use",
+    "Nutrients Transported to Surface Water": "nutrients-transported-to-surface-water",
+    "Nutrients Transported to Groundwater": "nutrients-transported-to-groundwater",
+    "Pathogens and Chemicals from Manure, Bio-solids or Compost Applications Transported to Surface Water": "pathogens-and-chemicals-from-manure-bio-solids-or-compost-applications-transported-to-surface-water",
+    "Pathogens and Chemicals from Manure, Bio-solids or Compost Applications Transported to Groundwater": "pathogens-and-chemicals-from-manure-bio-solids-or-compost-applications-transported-to-groundwater",
+    "Sediment Transported to Surface Water": "sediment-transported-to-surface-water",
+    "Pesticides Transported to Surface Water": "pesticides-transported-to-surface-water",
+    "Pesticides Transported to Groundwater": "pesticides-transported-to-groundwater",
+    "Petroleum, Heavy Metals and Other Pollutants Transported to Surface Water": "petroleum-heavy-metals-and-other-pollutants-transported-to-surface-water",
+    "Petroleum, Heavy Metals and Other Pollutants Transported to Groundwater": "petroleum-heavy-metals-and-other-pollutants-transported-to-groundwater",
+    "Salts Transported to Surface Water": "salts-transported-to-surface-water",
+    "Salts Transported to Groundwater": "salts-transported-to-groundwater",
+    "Elevated water temperature": "elevated-water-temperature",
+    "Emissions of Particulate Matter (PM) and PM Precursors": "emissions-of-particulate-matter-pm-and-pm-precursors",
+    "Emissions of Greenhouse Gasses - GHGs": "emissions-of-greenhouse-gasses-ghgs",
+    "Emissions of Ozone Precursors": "emissions-of-ozone-precursors",
+    "Objectionable Odor": "objectionable-odor",
+    "Emissions of Airborne Reactive Nitrogen": "emissions-of-airborne-reactive-nitrogen",
+    "Plant Pest Pressure": "plant-pest-pressure",
+    "Plant Productivity and Health": "plant-productivity-and-health",
+    "Plant Structure and Composition": "plant-structure-and-composition",
+    "Wildfire Hazard from Biomass Accumulation": "wildfire-hazard-from-biomass-accumulation",
+    "Feed and Forage Imbalance": "feed-and-forage-imbalance",
+    "Inadequate Livestock Shelter": "inadequate-livestock-shelter",
+    "Inadequate Livestock Water Quantity, Quality and Distribution": "inadequate-livestock-water-quantity-quality-and-distribution",
+    "Terrestrial Habitat for Wildlife and Invertebrates": "terrestrial-habitat-for-wildlife-and-invertebrates",
+    "Aquatic Habitat for Fish and other Organisms": "aquatic-habitat-for-fish-and-other-organisms",
+    "Energy Efficiency of Equipment and Facilities": "energy-efficiency-of-equipment-and-facilities",
+    "Energy Efficiency of Farming/Ranching Practices and Field Operations": "energy-efficiency-of-farming-ranching-practices-and-field-operations"
+  },
+  "practices": {
+    "Fence ": {
+      "slug": "cp-382-fence",
+      "cp": "382",
+      "definition": "A constructed barrier to animals or people."
+    },
+    "Streambank and Shoreline Protection ": {
+      "slug": "cp-580-streambank-and-shoreline-protection",
+      "cp": "580",
+      "definition": "Treatment(s) used to stabilize and protect banks of streams or constructed channels and shorelines of lakes, reservoirs, or estuaries."
+    },
+    "Heavy Use Area Protection ": {
+      "slug": "cp-561-heavy-use-area-protection",
+      "cp": "561",
+      "definition": "Stabilization or protection of an intensively used area."
+    },
+    "Livestock Pipeline ": {
+      "slug": "cp-516-livestock-pipeline",
+      "cp": "516",
+      "definition": "A pipeline and appurtenances installed to convey water for livestock or wildlife."
+    },
+    "Prescribed Grazing (IRA)": {
+      "slug": "cp-528-prescribed-grazing",
+      "cp": "528",
+      "definition": "Managing the harvest of vegetation with grazing and/or browsing animals with the intent to achieve specific ecological, economic, and management objectives."
+    },
+    "Cover Crop (IRA)": {
+      "slug": "cp-340-cover-crop",
+      "cp": "340",
+      "definition": "Grasses, legumes, and forbs planted for seasonal vegetative cover."
+    },
+    "Tree/Shrub Establishment (IRA)": {
+      "slug": "cp-612-tree-and-shrub-establishment",
+      "cp": "612",
+      "definition": "Establishing woody plants by planting, direct seeding, or through natural regeneration."
+    },
+    "Brush Management ": {
+      "slug": "cp-314-brush-management",
+      "cp": "314",
+      "definition": "The management or removal of woody (nonherbaceous or succulent) plants including those that are invasive and noxious."
+    },
+    "Dike and Levee ": {
+      "slug": "cp-356-dike-and-levee",
+      "cp": "356",
+      "definition": "A barrier used to retain water on the landscape using a wetland dike; or, a barrier used to exclude water from the landscape and protect property and infrastructure from flooding using a flood control levee."
+    },
+    "Herbaceous Weed Treatment ": {
+      "slug": "cp-315-herbaceous-weed-treatment",
+      "cp": "315",
+      "definition": "The removal or control of herbaceous weeds including invasive, noxious, prohibited, or undesirable plants."
+    },
+    "Residue and Tillage Mgmt (No Till) (IRA)": {
+      "slug": "cp-329-residue-and-tillage-mgmt-no-till",
+      "cp": "329",
+      "definition": "Limiting soil disturbance to manage the amount, orientation and distribution of crop and plant residue on the soil surface year around."
+    },
+    "Residue and Tillage Mgmt (Reduced Till) (IRA)": {
+      "slug": "cp-345-residue-and-tillage-mgmt-reduced-till",
+      "cp": "345",
+      "definition": "Managing the amount, orientation, and distribution of crop and other plant residue on the soil surface year-round while limiting soil-disturbing activities used to grow and harvest crops in systems where the field surface is tilled prior to planting."
+    },
+    "Conservation Crop Rotation (IRA)": {
+      "slug": "cp-328-conservation-crop-rotation",
+      "cp": "328",
+      "definition": "A planned sequence of crops grown on the same ground over a period of time (i.e. the rotation cycle)."
+    },
+    "Wildlife Habitat Planting (IRA)": {
+      "slug": "cp-420-wildlife-habitat-planting",
+      "cp": "420",
+      "definition": "Establishing wildlife habitat by planting herbaceous vegetation or shrubs"
+    },
+    "Pasture and Hay Planting ": {
+      "slug": "cp-512-pasture-and-hay-planting",
+      "cp": "512",
+      "definition": "Establishing adapted and compatible species, varieties, or cultivars of perennial herbaceous plants suitable for pasture or hay production."
+    },
+    "Critical Area Planting (IRA)": {
+      "slug": "cp-342-critical-area-planting",
+      "cp": "342",
+      "definition": "Establishing permanent vegetation on sites that have, or are expected to have, high erosion rates, and on sites that have physical, chemical, or biological conditions that prevent the establishment of vegetation with normal seeding/planting methods."
+    },
+    "Range planting (IRA)": {
+      "slug": "cp-550-range-planting",
+      "cp": "550",
+      "definition": ""
+    },
+    "Channel Bed Stabilization ": {
+      "slug": "cp-584-channel-bed-stablilization",
+      "cp": "584",
+      "definition": "Measure(s) used to stabilize the bed or bottom of a channel."
+    },
+    "Conservation Cover (IRA)": {
+      "slug": "cp-327-conservation-cover",
+      "cp": "327",
+      "definition": "Establishing and maintaining permanent vegetative cover"
+    },
+    "Access Control ": {
+      "slug": "cp-472-access-control",
+      "cp": "472",
+      "definition": "The temporary or permanent exclusion of animals, people, vehicles, and equipment from an area."
+    },
+    "Wetland Restoration (IRA)": {
+      "slug": "cp-657-wetland-restoration",
+      "cp": "657",
+      "definition": "The return of a wetland and its functions to a close approximation of its original condition as it existed prior to disturbance on a former or degraded wetland site."
+    },
+    "Watering Facility ": {
+      "slug": "cp-614-watering-facility",
+      "cp": "614",
+      "definition": ""
+    },
+    "Riparian Forest Buffer (IRA)": {
+      "slug": "cp-391-riparian-forest-buffer",
+      "cp": "391",
+      "definition": "An area predominantly covered by trees and/or shrubs located adjacent to and up-gradient from a watercourse or water body."
+    },
+    "Nutrient Management (IRA)": {
+      "slug": "cp-590-nutrient-management",
+      "cp": "590",
+      "definition": "Manage rate, source, placement, and timing of plant nutrients and soil amendments while reducing environmental impacts."
+    },
+    "Pest Management Conservation System ": {
+      "slug": "cp-595-pest-management-conservation-system",
+      "cp": "595",
+      "definition": ""
+    },
+    "Structures for Wildlife ": {
+      "slug": "cp-649-structures-for-wildlife",
+      "cp": "649",
+      "definition": "A structure installed to replace or modify a missing or deficient wildlife habitat component."
+    },
+    "Stream Crossing ": {
+      "slug": "cp-578-stream-crossing",
+      "cp": "578",
+      "definition": "A stabilized area or structure constructed across a stream to provide controlled access for people, livestock, equipment, or vehicles."
+    },
+    "Structure for Water Control ": {
+      "slug": "cp-587-structure-for-water-control",
+      "cp": "587",
+      "definition": "A structure in a water management system that conveys water, controls the direction or rate of flow, maintains a desired water surface elevation, or measures water."
+    },
+    "Stream Habitat Improvement and Management ": {
+      "slug": "cp-395-stream-habitat-improvement-and-management",
+      "cp": "395",
+      "definition": "Improve, restore, or maintain the ecological functions of a stream and its adjacent floodplain and riparian area."
+    },
+    "Grade Stabilization Structure ": {
+      "slug": "cp-410-grade-stabilization-structure",
+      "cp": "410",
+      "definition": "A structure used to control the grade in natural or constructed channels."
+    },
+    "Riparian Herbaceous Cover (IRA)": {
+      "slug": "cp-390-riparian-herbaceous-cover",
+      "cp": "390",
+      "definition": "Grasses, sedges, rushes, ferns, legumes, and forbs tolerant of intermittent flooding or saturated soils, established or managed as the dominant vegetation in the transitional zone between upland and aquatic habitats."
+    },
+    "Aquatic Organism Passage ": {
+      "slug": "cp-396-aquatic-organism-passage",
+      "cp": "396",
+      "definition": "Modification or removal of barriers that restrict or impede movement of aquatic organisms."
+    },
+    "Wetland Creation ": {
+      "slug": "cp-658-wetland-creation",
+      "cp": "658",
+      "definition": "A wetland created on a site location that was historically not a wetland."
+    },
+    "Wetland Enhancement ": {
+      "slug": "cp-659-wetland-enhancement",
+      "cp": "659",
+      "definition": "The augmentation of wetland functions beyond the original natural conditions on a former, degraded, or naturally functioning wetland site; sometimes at the expense of other functions."
+    },
+    "Wetland Wildlife Habitat Management ": {
+      "slug": "cp-644-wetland-wildlife-habitat-management",
+      "cp": "644",
+      "definition": "Retaining, developing or managing wetland habitat for wetland wildlife."
+    },
+    "Shallow Water Development and Management ": {
+      "slug": "cp-646-shallow-water-development-and-management",
+      "cp": "646",
+      "definition": "The inundation of lands to provide habitat for fish and/or wildlife."
+    },
+    "Restoration of Rare and Declining Habitats": {
+      "slug": "cp-643-restoration-of-rare-and-declining-habitats",
+      "cp": "643",
+      "definition": "Reestablishment of abiotic (physical and chemical) and biotic (biological) conditions necessary to support rare or declining natural assemblages of native plants and animals."
+    }
+  },
+  "handbookOnlyPractices": [
+    "CP 378 - Pond",
+    "CP 533 - Pumping Plant",
+    "CP 642 - Water Well"
+  ]
+}

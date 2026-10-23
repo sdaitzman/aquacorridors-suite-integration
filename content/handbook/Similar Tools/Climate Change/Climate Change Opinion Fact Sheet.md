@@ -1,0 +1,5 @@
+![[Climate Opinion Screenshot.png]]
+This Factsheets tool, based on the [Yale Climate Opinion Maps](https://climatecommunication.yale.edu/visualizations-data/ycom-us/), provides information about Americans' beliefs, risk perceptions, and policy preferences about climate change for all 50 states, 435 congressional districts, and 3,142 counties across the U.S. The tool allows you to customize which survey questions are shown on your Factsheet. The opinion estimates are based on a statistical model that uses a large individual-level survey dataset, plus geographic, demographic, economic, and other data to provide results accurate to within about 8 percentage points at any geographic level.
+
+[Link to Tool](https://climatecommunication.yale.edu/visualizations-data/factsheets/?utm_source=Yale+Program+on+Climate+Change+Communication&utm_campaign=96aa0ac461-EMAIL_CAMPAIGN_2024_05_06_02_59&utm_medium=email&utm_term=0_-96aa0ac461-%5BLIST_EMAIL_ID%5D&utm_source=Merged+Symposium+and+Newsletter+Lists&utm_campaign=2b45d8e26a-EMAIL_CAMPAIGN_2020_05_20_01_39_COPY_01&utm_medium=email&utm_term=0_bd5faaf92a-2b45d8e26a-123494965)
+

@@ -1,0 +1,29 @@
+{
+  "name": "aquacorridors-suite",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "sync:handbook": "node scripts/sync-handbook.mjs",
+    "sync:planner": "node scripts/sync-planner-data.mjs",
+    "sync:art": "node scripts/prepare-art.mjs",
+    "sync": "npm run sync:handbook && npm run sync:planner && npm run sync:art",
+    "check": "node scripts/check-crosswalk.mjs"
+  },
+  "dependencies": {
+    "marked": "^15.0.0",
+    "papaparse": "^5.4.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "d3-axis": "^3.0.0",
+    "d3-scale": "^4.0.2",
+    "d3-selection": "^3.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.0",
+    "vite": "^7.0.0"
+  }
+}
