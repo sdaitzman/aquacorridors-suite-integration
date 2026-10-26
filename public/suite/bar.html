@@ -1,0 +1,14 @@
+<!-- AquaCorridors suite tool bar — injected above the report generator by scripts/sync-report.mjs.
+     Same slim bar as the Planner/Handbook (src/components/Shell.jsx); the host portal supplies the
+     real site header. Hidden in print and with ?embed=…, like the rest of the suite. -->
+<div class="suite-bar" id="suite-bar" data-noprint>
+  <a class="brand" href="../#/"><img src="../art/wlfw-logo-black.png" alt="Working Lands for Wildlife"><span><b>Southern Waters</b> Report generator</span></a>
+  <span class="spacer"></span>
+  <nav aria-label="AquaCorridors tools">
+    <a href="../#/planner">Planner</a>
+    <a href="../#/handbook">Handbook</a>
+    <a class="active" href="./" aria-current="page">Report generator</a>
+    <a href="../#/">Overview</a>
+  </nav>
+</div>
+<script>if (/[?&]embed=/.test(location.search)) document.getElementById('suite-bar').hidden = true;</script>

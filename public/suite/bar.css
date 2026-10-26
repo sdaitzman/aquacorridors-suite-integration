@@ -1,0 +1,15 @@
+/* AquaCorridors suite tool bar on the report generator page (public/suite/bar.html).
+   Scoped to .suite-bar so nothing in the generator's own stylesheet is touched; the
+   colours come from that page's palette so the bar sits on it like the generator's own topbar. */
+.suite-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:10px 26px 0;font-family:var(--sans,Poppins,system-ui,sans-serif);color:var(--ink,#2E1E12)}
+.suite-bar .brand{display:inline-flex;align-items:center;gap:10px;color:inherit;font-size:13px;text-decoration:none}
+.suite-bar .brand:hover{color:inherit}
+.suite-bar .brand img{width:30px;height:30px;display:block}
+.suite-bar .brand b{font-weight:600}
+.suite-bar .spacer{flex:1 1 20px}
+.suite-bar nav{display:flex;flex-wrap:wrap;gap:4px}
+.suite-bar nav a{padding:6px 13px;border-radius:999px;font-size:12px;font-weight:500;color:var(--ink,#2E1E12);white-space:nowrap;text-decoration:none}
+.suite-bar nav a:hover{background:var(--sunset,#EAC891);color:var(--ink,#2E1E12)}
+.suite-bar nav a.active{background:var(--ink,#2E1E12);color:var(--cream,#F7EFDF)}
+@media (max-width:480px){.suite-bar{padding:8px 14px 0}}
+@media print{.suite-bar{display:none !important}}

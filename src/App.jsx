@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useRoute } from './lib/router.js'
+import { useRoute, reportHref } from './lib/router.js'
 import { ToolBar, Footer } from './components/Shell.jsx'
 import Home from './components/Home.jsx'
 import Planner from './components/Planner.jsx'
@@ -17,6 +17,9 @@ export default function App() {
 
   let view
   const [top, second] = route.parts
+  // #/report?huc8=… → the report generator's own page, its query string passed through.
+  useEffect(() => { if (top === 'report') window.location.replace(reportHref(route.query)) }, [top, route.query])
+  if (top === 'report') return null
   if (top === 'planner' && second === 'results') view = <PlannerResults route={route} />
   else if (top === 'planner' && second === 'concerns') view = <Planner route={route} step={2} />
   else if (top === 'planner') view = <Planner route={route} step={1} />

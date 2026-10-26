@@ -10,7 +10,8 @@
     "sync:handbook": "node scripts/sync-handbook.mjs",
     "sync:planner": "node scripts/sync-planner-data.mjs",
     "sync:art": "node scripts/prepare-art.mjs",
-    "sync": "npm run sync:handbook && npm run sync:planner && npm run sync:art",
+    "sync:report": "node scripts/sync-report.mjs",
+    "sync": "npm run sync:handbook && npm run sync:planner && npm run sync:art && npm run sync:report",
     "check": "node scripts/check-crosswalk.mjs"
   },
   "dependencies": {

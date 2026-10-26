@@ -1,0 +1,70 @@
+{
+  "computed": "2026-10-22",
+  "note": "Region-wide reference numbers for the Southern Waters operational boundary, computed once with server-side count/statistics queries (tools noted in README). Re-run when sources refresh.",
+  "orgs": {
+    "inRegion": 250,
+    "source": "LP_organizations_AI_augmentAddresses, points inside the boundary"
+  },
+  "barriers": {
+    "dams": 266272,
+    "damsAssessed": 3990,
+    "damsComplete": 3606,
+    "xings": 61519,
+    "xingsSevere": 7006,
+    "source": "SARP_barriers_swf_08042026 (BarrierType=Dam) and All_RoadBarriers_01212019 inside the boundary"
+  },
+  "attains": {
+    "unitsAssessed": 54083,
+    "unitsImpaired": 33142,
+    "unitsListed": 18077,
+    "lengthAssessed": 696320100,
+    "lengthImpaired": 427479400,
+    "lengthListed": 260142129,
+    "source": "ATTAINS_Assessment lines (layer 1) intersecting the boundary; 'assessed' excludes Not Assessed units"
+  },
+  "priority": {
+    "layers": {
+      "usfs": 93,
+      "sarp": 103,
+      "acf": 14,
+      "nwqi": 55,
+      "pfw": 77,
+      "cp": 26
+    },
+    "source": "feature counts intersecting the boundary (USFS by bounding box)"
+  },
+  "secas": {
+    "total": 447011195,
+    "nodata": 0,
+    "regionAcres": 447004362,
+    "acres": {
+      "0": 220176560,
+      "1": 30618201,
+      "2": 86365163,
+      "3": 65062476,
+      "4": 44788795
+    },
+    "level": 7,
+    "res": 1223,
+    "source": "png",
+    "note": "swfDev.regionBlueprint() over the Oct-2026 boundary using the public Blueprint map tiles (PNG colours \u2192 classes) at 1,223 m; classes 4 highest \u2026 0 lower (transparent)"
+  },
+  "boundary": "Oct-2026 programmatic boundary (counties, dissolved) \u2014 data/swf-boundary.json",
+  "nlcd": {
+    "year": 2021,
+    "total": 448707764,
+    "unknown": 0,
+    "acres": {
+      "crops": 45594936,
+      "pasture": 66349974,
+      "forest": 184906666,
+      "developed": 42369797,
+      "wetland": 57765943,
+      "water": 12971445,
+      "other": 1138546,
+      "shrub": 37610457
+    },
+    "res_m": 1105,
+    "source": "MRLC NLCD 2021 WMS image of the boundary at ~1105 m, masked by the boundary, colours \u2192 classes"
+  }
+}

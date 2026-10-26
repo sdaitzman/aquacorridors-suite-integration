@@ -1,4 +1,4 @@
-import { href, BASE } from '../lib/router.js'
+import { href, reportHref, BASE } from '../lib/router.js'
 
 const PORTAL = 'https://archive.landscapepartnership.org/networks/working-lands-for-wildlife/landscapes-wildlife/landscapes/aquatics/maps-and-data/aquacorridors-tool-suite'
 
@@ -16,6 +16,7 @@ export default function Home() {
             <div className="cluster">
               <a className="pill river" href={href('/planner')}>Start with the Planner →</a>
               <a className="pill" href={href('/handbook')}>Browse the Handbook</a>
+              <a className="pill" href={reportHref()}>Generate a report</a>
             </div>
           </div>
         </div>
@@ -36,6 +37,13 @@ export default function Home() {
             <p>Conservation practices, threats and resource concerns, benefits, NRCS and FSA funding programs, and a directory of other decision-support tools. Explore by benefit, by threat, or by practice.</p>
             <span className="foot"><span className="pill sm sand">Open the Handbook →</span></span>
             <img className="circle" src={`${BASE}art/circle-streambank-protection.png`} alt="" />
+          </a>
+          <a className="tool-card sand has-art" href={reportHref()}>
+            <span className="num">03 · Report generator</span>
+            <span className="t">A conservation report for your area</span>
+            <p>Draw or pick an area in the Southeast and get a report on at-risk aquatic species, the SECAS Blueprint, impaired waters (EPA ATTAINS), aquatic barriers (SARP), partner organizations and more — the Working Lands for Wildlife · Southern Waters report generator.</p>
+            <span className="foot"><span className="pill sm river">Open the Report generator →</span></span>
+            <img className="circle" src={`${BASE}art/circle-aquatic-organism-passage.png`} alt="" />
           </a>
         </div>
       </section>
@@ -71,13 +79,13 @@ export default function Home() {
         <div className="section-head"><span className="arch" style={{ background: 'var(--lmoss)' }} /><span className="title">Also in the suite · not part of this prototype</span></div>
         <div className="card-grid">
           <div className="tool-card ph">
-            <span className="num">03 · placeholder</span>
+            <span className="num">04 · placeholder</span>
             <span className="t">Data Layer Library</span>
             <p>A curated collection of aquatic conservation datasets from agencies and NGOs. Lives on the Landscape Partnership portal and requires a login.</p>
             <span className="foot"><a className="pill xs" href={`${PORTAL}/aquacorridors-data-layer-library/aquacorridor-data-library`} target="_blank" rel="noopener">Open on the portal ↗</a></span>
           </div>
           <div className="tool-card ph">
-            <span className="num">04 · placeholder</span>
+            <span className="num">05 · placeholder</span>
             <span className="t">Mapper</span>
             <p>Explore and export data for an area of interest: at-risk species by watershed, partner priority areas, contacts and landscape conditions. Lives on the Landscape Partnership portal and requires a login.</p>
             <span className="foot"><a className="pill xs" href={`${PORTAL}/aquacorridors-mapper/aquacorridors-mapper`} target="_blank" rel="noopener">Open on the portal ↗</a></span>

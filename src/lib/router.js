@@ -56,3 +56,13 @@ export function useMediaQuery(q) {
   }, [q])
   return m
 }
+
+/**
+ * The Southern Waters report generator is a separate static page mirrored into
+ * public/report/ (see scripts/sync-report.mjs), not a hash route: its own query
+ * string carries the report (?huc8=, ?county=, ?poly=…), so links go straight there.
+ */
+export function reportHref(query) {
+  const qs = query ? new URLSearchParams(query).toString() : ''
+  return `${BASE}report/${qs ? `?${qs}` : ''}`
+}

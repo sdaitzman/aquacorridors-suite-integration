@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { href, BASE } from '../lib/router.js'
+import { href, reportHref, BASE } from '../lib/router.js'
 import { getPlannerRun, PLANNER_EVENT } from '../lib/planner.js'
 
 // Slim tool bar: the host page (Landscape Partnership portal) supplies the site
@@ -20,6 +20,7 @@ export function ToolBar({ route }) {
       <nav aria-label="AquaCorridors tools">
         <a className={cls('planner')} href={plannerHref} title={run.complete ? 'Your Planner results' : 'Open the Planner'}>{run.complete ? 'Planner results' : 'Planner'}</a>
         <a className={cls('handbook')} href={href('/handbook')}>Handbook</a>
+        <a href={reportHref()} title="Southern Waters conservation report for an area of interest">Report generator</a>
         <a className={cls('')} href={href('/')}>Overview</a>
       </nav>
     </div>
@@ -41,7 +42,7 @@ function usePlannerRun() {
 export function Footer() {
   return (
     <footer className="footer">
-      <span>Planner data: USDA NRCS Conservation Practice Physical Effects (CPPE) · Handbook: the AquaCorridors Handbook</span>
+      <span>Planner data: USDA NRCS Conservation Practice Physical Effects (CPPE) · Handbook: the AquaCorridors Handbook · Report generator: Working Lands for Wildlife · Southern Waters</span>
       <span className="credit">Illustrations by <img src={`${BASE}art/erick-signature.png`} alt="Erick Ingraham" /></span>
     </footer>
   )
