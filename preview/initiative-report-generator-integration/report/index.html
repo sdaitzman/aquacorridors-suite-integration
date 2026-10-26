@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Southern Waters · Report generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="styles.css?v=83">
+<link rel="stylesheet" href="../suite/bar.css">
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- STEP 1 · INTAKE                                               -->
+<!-- ============================================================ -->
+<a class="skip-link" href="#report" id="skip-link">Skip to report content</a>
+<!-- AquaCorridors suite tool bar — injected above the report generator by scripts/sync-report.mjs.
+     Same slim bar as the Planner/Handbook (src/components/Shell.jsx); the host portal supplies the
+     real site header. Hidden in print and with ?embed=…, like the rest of the suite. -->
+<div class="suite-bar" id="suite-bar" data-noprint>
+  <a class="brand" href="../#/"><img src="../art/wlfw-logo-black.png" alt="Working Lands for Wildlife"><span><b>Southern Waters</b> Report generator</span></a>
+  <span class="spacer"></span>
+  <nav aria-label="AquaCorridors tools">
+    <a href="../#/planner">Planner</a>
+    <a href="../#/handbook">Handbook</a>
+    <a class="active" href="./" aria-current="page">Report generator</a>
+    <a href="../#/">Overview</a>
+  </nav>
+</div>
+<script>if (/[?&]embed=/.test(location.search)) document.getElementById('suite-bar').hidden = true;</script>
+<div id="intake" role="main" aria-label="Build your report">
+  <div class="inner">
+    <div class="head">
+      <span class="logo-pill"><img src="assets/wlfw-southern-waters-logo-black.png" alt="Working Lands for Wildlife — Southern Waters"></span>
+      <div class="label" style="font-size:10.5px">Step 1 of 2 · build your report</div>
+    </div>
+
+    <div class="hero" style="padding:clamp(28px,5vw,52px)">
+      <div class="deco" style="right:-40px;top:-40px;width:240px;height:120px;background:var(--sunset);border-radius:0 0 240px 240px"></div>
+      <div class="deco" style="right:22%;bottom:-60px;width:170px;height:170px;background:var(--rojo);border-radius:999px"></div>
+      <img class="deco art" src="assets/species-hellbender-1100.jpg" alt="" style="right:-2%;top:-6%;width:min(46%,480px);transform:rotate(-9deg)">
+      <div class="copy" style="max-width:560px;gap:16px">
+        <div class="eyebrow">Working lands for wildlife · southern waters</div>
+        <h1 style="font-size:clamp(32px,5.4vw,56px);line-height:1">Tell us about you<br>and your area</h1>
+        <p class="lede" style="max-width:46ch">We use this to tailor the conservation report — species, partners, water quality and barriers for exactly the area you care about.</p>
+      </div>
+    </div>
+
+    <div class="row" style="align-items:flex-start">
+      <!-- About you -->
+      <div class="panel" style="background:var(--lolive);justify-content:flex-start;padding:clamp(24px,4vw,36px)">
+        <div style="font-size:20px;font-weight:600;letter-spacing:-.02em;color:var(--rojo)">About you</div>
+        <label class="field"><span class="label">Name</span><input id="f-name" placeholder="Jordan Rivers" autocomplete="name"></label>
+        <label class="field"><span class="label">Email</span><input id="f-email" type="email" placeholder="jordan@organization.org" autocomplete="email"></label>
+        <label class="field"><span class="label">Organization</span><input id="f-org" placeholder="Regional Land Trust" autocomplete="organization"></label>
+        <label class="field"><span class="label">What are you working on?</span><textarea id="f-project" rows="3" placeholder="e.g. scoping a riparian buffer project on 400 acres"></textarea></label>
+      </div>
+
+      <!-- Area of interest -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="panel" style="background:var(--sunset);justify-content:flex-start;padding:clamp(22px,3.4vw,32px);overflow:visible">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:20px;font-weight:600;letter-spacing:-.02em;color:var(--rojo)">Your area of interest</div>
+            <div style="font-size:13px;line-height:1.5;opacity:.8">Pick one — draw it, upload it, or choose an existing boundary.</div>
+          </div>
+
+          <div class="seg" id="aoi-modes">
+            <button class="pill" data-mode="draw" aria-pressed="true">Draw on map</button>
+            <button class="pill" data-mode="upload" aria-pressed="false">Upload shapefile</button>
+            <button class="pill" data-mode="region" aria-pressed="false">Select a region</button>
+          </div>
+
+          <!-- upload controls -->
+          <div id="mode-upload" hidden style="display:flex;flex-direction:column;gap:12px">
+            <div class="drop" id="drop">
+              <b>Drop a shapefile here</b>
+              <small>Zipped .shp with .dbf and .prj, or a .geojson / .kml. Max 25 MB.</small>
+              <span class="pill rojo" style="margin-top:6px">Choose file</span>
+              <input id="file" type="file" accept=".zip,.geojson,.json,.kml" hidden aria-label="Upload a zipped shapefile, GeoJSON or KML">
+            </div>
+          </div>
+
+          <!-- region controls -->
+          <div id="mode-region" hidden style="display:flex;flex-direction:column;gap:12px">
+            <div class="field">
+              <span class="label">Region type</span>
+              <div class="seg" id="region-kinds">
+                <button class="pill" data-kind="county" aria-pressed="true">County</button>
+                <button class="pill" data-kind="huc8" aria-pressed="false">HUC-8 watershed</button>
+                <button class="pill" data-kind="huc12" aria-pressed="false">HUC-12 subwatershed</button>
+              </div>
+            </div>
+            <label class="field">
+              <span class="label" id="region-label">County name</span>
+              <input id="region-q" placeholder="e.g. Macon, Buncombe, Cherokee…" autocomplete="off">
+            </label>
+            <div class="suggest" id="region-suggest"></div>
+            <div style="font-size:12.5px;line-height:1.5;opacity:.8" id="region-note">Counties and watersheds are limited to the Southern Waters Framework operational boundary (dashed outline on the map). Watersheds come from the USGS Watershed Boundary Dataset; counties from Esri's US counties layer.</div>
+          </div>
+
+          <!-- the map (always visible; draw tools only in draw mode) -->
+          <div class="drawwell" id="drawwell">
+            <div class="map" id="intake-map"></div>
+            <div class="tools" id="draw-tools">
+              <span class="pill xs rojo" style="cursor:default">✎ Polygon</span>
+              <button class="pill xs" id="btn-undo">Undo</button>
+              <button class="pill xs" id="btn-close">Close</button>
+              <button class="pill xs" id="btn-clear">Clear</button>
+              <span class="pill xs" style="cursor:default;opacity:.85" title="Drag a point to move it · click a small square to add a point · right-click a point to remove it">? Editing tips</span>
+            </div>
+            <div class="search"><input id="jump" placeholder="Jump to a place…" aria-label="Search a place name to move the map" title="Search a place name (OpenStreetMap Nominatim)"></div>
+            <div class="status" id="draw-status">Click the map to start drawing</div>
+            <p class="sr-only" id="draw-kbd">Drawing requires a pointer. Keyboard users: choose Select a region or Upload shapefile instead.</p>
+          </div>
+        </div>
+
+        <div class="summary-row">
+          <div class="label" id="aoi-summary">No area selected yet</div>
+          <button class="pill" id="btn-clear-area" type="button" disabled title="Remove the drawn, uploaded or selected area and start over">Clear area ✕</button>
+          <button class="pill rojo generate" id="btn-generate" disabled>Generate my report →</button>
+          <button class="pill" id="btn-admin" type="button" style="box-shadow:inset 0 0 0 1.5px rgba(46,30,18,.25)" title="One Word document listing every feature, layer, field and about-text in the report, for review">Download admin report (Word)</button>
+        </div>
+        <div id="gen-loading" class="loading" hidden><span class="spinner"></span><span id="gen-loading-text">Querying watersheds…</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- STEP 2 · REPORT                                               -->
+<!-- ============================================================ -->
+<div id="report" class="deck" hidden role="main" aria-label="Conservation report" tabindex="-1">
+  <div class="topbar" data-noprint role="banner">
+    <div class="spacer"><span class="logo-pill"><img src="assets/wlfw-southern-waters-logo-black.png" alt="Working Lands for Wildlife — Southern Waters"></span></div>
+    <button class="pill ink" id="btn-edit">← Edit inputs</button>
+    <button class="pill ink" id="btn-share" type="button" title="Copy a link that reopens this exact report">Copy link</button>
+    <span class="dl-menu" id="dl-menu">
+      <button class="pill rojo" id="btn-print" type="button" aria-haspopup="menu" aria-expanded="false"><img src="assets/icon-download.png" alt="">Download report (PDF) ▾</button>
+      <div class="dl-options" role="menu" hidden>
+        <button type="button" role="menuitem" data-mode="preview"><b>Export with preview data</b><span>Tables show the first 25 rows, as on screen · shorter PDF</span></button>
+        <button type="button" role="menuitem" data-mode="full"><b>Export with all data</b><span>Every row of every table · long PDF for large areas</span></button>
+      </div>
+    </span>
+  </div>
+  <nav class="subnav pc-nav" id="part-nav" data-noprint aria-label="Report sections"></nav>
+  <div class="progress" id="progress" data-noprint hidden role="status" aria-live="polite">
+    <div class="bar"><div class="fill" id="progress-fill"></div></div>
+    <div class="label" id="progress-text" style="font-size:10.5px;opacity:.85">Loading sections…</div>
+  </div>
+  <div class="svc-banner" id="svc-banner" data-noprint hidden role="alert">
+    <span id="svc-banner-text">Some data sources did not respond.</span>
+    <button class="pill xs rojo" id="svc-retry" type="button">Retry</button>
+  </div>
+  <button class="deck-arrow prev" id="deck-prev" data-noprint type="button" aria-label="Previous section" title="Previous section (←)">‹</button>
+  <button class="deck-arrow next" id="deck-next" data-noprint type="button" aria-label="Next section" title="Next section (→)">›</button>
+  <div class="deck-counter" id="deck-counter" data-noprint aria-live="polite"></div>
+
+  <div class="wrap">
+    <div class="print-head">
+      <img src="assets/wlfw-southern-waters-logo-black.png" alt="Working Lands for Wildlife — Southern Waters">
+      <div class="label">Conservation report · generated <span class="print-date"></span></div>
+    </div>
+
+    <!-- 00 · Reporting area -->
+    <section class="section" id="s-area" style="padding-top:20px">
+      <div class="hero">
+        <div class="deco" style="right:-40px;top:-40px;width:260px;height:130px;background:var(--sunset);border-radius:0 0 260px 260px"></div>
+        <div class="deco" style="right:60px;bottom:-70px;width:180px;height:180px;background:var(--rojo);border-radius:999px"></div>
+        <img class="deco art screen-art" src="assets/species-hellbender-1100.jpg" alt="Eastern Hellbender" style="right:-4%;top:-2%;width:min(48%,560px);transform:rotate(-9deg)"><img class="deco art print-art" src="assets/species-hellbender-terra.jpg" alt="" style="right:-4%;top:-2%;width:min(48%,560px);transform:rotate(-9deg)">
+        <div class="copy">
+          <div class="eyebrow">Working lands for wildlife · southern waters</div>
+          <h1>Conservation<br>report for your<br>area of interest</h1>
+          <p class="lede">Everything below is calculated from the area you drew — species, priorities, water quality and barriers, assembled for partners writing project reports.</p>
+          <div class="mono" style="font-size:11px;letter-spacing:.08em;opacity:.8">Generated <span id="generated-on"></span> <span id="generated-for"></span></div>
+        </div>
+      </div>
+
+      <div class="toc" style="margin-top:22px">
+        <div class="t">In this report</div>
+        <div class="toc-groups">
+          <div class="toc-group">
+            <div class="toc-head"><span class="k">Part 1</span><span class="name">Conservation Context Layers</span><span class="sub">What lives in, flows through and is prioritized across your area</span></div>
+            <div class="toc-grid">
+              <a href="#s-species"><span>01</span><span>At-Risk Aquatic Species</span></a>
+              <a href="#s-barriers"><span>05</span><span>Dams + Stream Crossings</span></a>
+              <a href="#s-waters"><span>04</span><span>Impaired Waterways</span></a>
+              <a href="#s-secas"><span>03</span><span>SECAS Blueprint</span></a>
+            </div>
+          </div>
+          <div class="toc-group">
+            <div class="toc-head"><span class="k">Part 2</span><span class="name">Partner Opportunity Layers</span><span class="sub">Who is already working here and where they focus</span></div>
+            <div class="toc-grid">
+              <a href="#sub-orgs"><span>02a</span><span>Organizations</span></a>
+              <a href="#sub-stories"><span>02b</span><span>Success Stories</span></a>
+              <a href="#sub-priority"><span>02c</span><span>Priority Layers</span></a>
+            </div>
+          </div>
+          <div class="toc-group">
+            <div class="toc-head"><span class="k">Part 3</span><span class="name">Landscape Context</span><span class="sub">Working lands and current conditions</span></div>
+            <div class="toc-grid">
+              <a href="#s-ag"><span>07</span><span>2022 Agriculture Census</span></a>
+              <a href="#s-drought"><span>06</span><span>Drought</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 00a · your area: land-cover map + plain-language summary + area tiles -->
+      <div class="ov-card" id="ov-area">
+        <div class="ov-top">
+          <div class="mapwell wide live" id="boundary-well" role="img" aria-label="Map of your reporting area, shown as land cover or satellite imagery (switch in the top-left corner). The panel beside it summarizes the area and lists the land-cover shares.">
+            <div class="map" id="boundary-map"></div>
+            <button class="explore" data-viewer="boundary"><span>⤢</span>Click to explore</button>
+          </div>
+          <div class="ov-side">
+            <div class="ov-block">
+              <div class="label">About this area</div>
+              <p class="ov-summary" id="area-summary" aria-live="polite">Building a summary of your area…</p>
+            </div>
+            <div class="ov-block lc-cap">
+              <div class="ov-row"><div class="label">Land cover · NLCD 2021</div><div class="mono" id="lc-note" style="font-size:10px;opacity:.85">Loading land cover…</div></div>
+              <div class="bp-bar" id="lc-bar" aria-hidden="true"></div>
+              <div class="legend-row lc-chips" id="lc-legend"></div>
+              <div class="region-ctx" id="rc-landcover" hidden><span class="label">Region-wide context</span><span class="txt"></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="ov-stats">
+          <div class="stat" style="background:var(--sunset)"><div class="n" id="st-acres">###</div><div class="label">Total acres</div></div>
+          <div class="stat" style="background:var(--olive);color:var(--cream)"><div class="n" id="st-huc">##</div><div class="label">HUC-8 watersheds</div></div>
+          <div class="stat" style="background:var(--rojo);color:var(--cream)"><div class="n" id="st-counties">…</div><div class="label" id="st-counties-label">Counties</div></div>
+          <div class="stat" style="background:var(--lolive)"><div class="n" id="st-cover">…</div><div class="label" id="st-cover-label">Largest land cover</div></div>
+        </div>
+      </div>
+
+      <!-- 00b · where the area sits in the Southern Waters boundary -->
+      <div class="ov-card" id="ov-context">
+        <div class="mapwell context live" id="context-well" role="img" aria-label="Map of your area within the Southern Waters boundary, shaded by at-risk species per watershed. Details are in the text and table of this section.">
+          <div class="map" id="context-map"></div>
+          <button class="explore" data-viewer="context"><span>⤢</span>Click to explore</button>
+        </div>
+        <div class="ov-band">
+          <div style="display:flex;flex-wrap:wrap;gap:8px 24px;align-items:flex-end;justify-content:space-between">
+            <div><div style="font-size:19px;font-weight:600;letter-spacing:-.01em;color:var(--rojo)">Your area within the Southern Waters boundary</div><div style="font-size:12.5px;opacity:.85;margin-top:3px">Shaded by at-risk aquatic species per HUC-8 watershed across the whole region</div></div>
+            <div class="label" id="ctx-note" style="font-size:10.5px;max-width:52ch;text-align:right">Loading region-wide at-risk species…</div>
+          </div>
+          <div class="legend-row" id="ctx-legend"><div>Loading legend…</div></div>
+        </div>
+      </div>
+
+      <!-- 00c · preview: one number from every page, grouped like the section nav -->
+      <div class="ov-card ov-preview" id="summary">
+        <div class="ov-row ov-head"><div class="ov-title" style="margin-top:0">Report Preview</div></div>
+        <div class="pv-parts">
+          <div class="pv-part" data-part="1">
+            <div class="pv-part-head"><span class="k">Part 1</span><span class="name">Conservation Context</span></div>
+            <div class="pv-tiles">
+              <a href="#s-species" class="pv-tile"><span class="pv-sec"><span class="pv-arch" style="background:var(--olive)"></span>01 · At-Risk Aquatic Species</span><b class="n" id="st-species">…</b><span class="pv-lab">at-risk aquatic species</span><span class="pv-viz" id="pv-viz-species" aria-hidden="true"></span></a>
+              <a href="#s-barriers" class="pv-tile"><span class="pv-sec"><span class="pv-arch" style="background:var(--olive)"></span>05 · Dams + Stream Crossings</span><b class="n" id="sum-dams">…</b><span class="pv-lab">dams · <span id="sum-xings">…</span> assessed road crossings</span></a>
+              <a href="#s-waters" class="pv-tile"><span class="pv-sec"><span class="pv-arch" style="background:var(--lolive)"></span>04 · Impaired Waterways</span><b class="n" id="sum-miles">…</b><span class="pv-lab">impaired stream miles</span></a>
+              <a href="#s-secas" class="pv-tile"><span class="pv-sec"><span class="pv-arch" style="background:var(--terra)"></span>03 · SECAS Blueprint</span><b class="n" id="st-secas">…</b><span class="pv-lab">acres of highest priority</span><span class="pv-viz" id="pv-viz-secas" aria-hidden="true"></span></a>
+            </div>
+          </div>
+          <div class="pv-part" data-part="2">
+            <div class="pv-part-head"><span class="k">Part 2</span><span class="name">Partner Opportunity</span></div>
+            <div class="pv-tiles">
+              <a href="#sub-orgs" class="pv-tile"><span class="pv-sec"><span class="pv-arch" style="background:var(--sunset)"></span>02a · Organizations</span><b class="n" id="sum-orgs">…</b><span class="pv-lab">organizations within 50 mi</span></a>
+              <a href="#sub-stories" class="pv-tile"><span class="pv-sec"><span class="pv-arch" style="background:var(--olive)"></span>02b · Success Stories</span><b class="n" id="sum-stories">…</b><span class="pv-lab">success stories within 100 mi</span></a>
+              <a href="#sub-priority" class="pv-tile"><span class="pv-sec"><span class="pv-arch" style="background:var(--terra)"></span>02c · Priority Layers</span><b class="n" id="sum-priority">…</b><span class="pv-lab">partner layers overlap your area</span><span class="pv-viz" id="pv-viz-priority" aria-hidden="true"></span></a>
+            </div>
+          </div>
+          <div class="pv-part" data-part="3">
+            <div class="pv-part-head"><span class="k">Part 3</span><span class="name">Landscape Context</span></div>
+            <div class="pv-tiles">
+              <a href="#s-ag" class="pv-tile"><span class="pv-sec"><span class="pv-arch" style="background:var(--lolive)"></span>07 · 2022 Agriculture Census</span><b class="n" id="sum-farms">…</b><span class="pv-lab">farms (county shares inside your area)</span></a>
+              <a href="#s-drought" class="pv-tile"><span class="pv-sec"><span class="pv-arch" style="background:var(--sunset)"></span>06 · Drought</span><b class="n" id="sum-drought">…</b><span class="pv-lab">of your area in drought now</span><span class="pv-viz" id="pv-viz-drought" aria-hidden="true"></span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="about" style="margin-top:22px">
+        <div class="label" style="font-size:10.5px">About this data</div>
+        <p>Land cover inside your area comes from the <a href="https://www.mrlc.gov/data" target="_blank" rel="noopener">National Land Cover Database 2021</a> (Multi-Resolution Land Characteristics Consortium), read as a rendered image of your area from MRLC’s map service, clipped to your boundary and tallied by class colour. The sixteen NLCD classes are grouped as forest (deciduous, evergreen, mixed), cropland, pasture/hay, developed (all four intensities), wetlands (woody and emergent), open water, shrub and grassland, and barren/other. Acres are the pixel count scaled for latitude; the image is rendered at about 1,000 pixels across your area, so very small areas are read at NLCD’s native 30 m and large areas at a coarser scale noted under the bar.</p>
+        <p id="lc-method" style="opacity:.85"></p>
+      </div>
+      <figure class="fauna-hero" aria-hidden="true">
+        <div class="fh-stage">
+          <svg class="fh-shape" viewBox="0 0 600 420" focusable="false">
+            <path class="fh-blob" d="M302 34C404 22 526 66 554 160C582 254 528 352 424 386C320 420 186 410 108 352C30 294 24 186 78 116C132 46 200 46 302 34Z"/>
+            <circle class="fh-dot" cx="520" cy="78" r="40"/>
+            <path class="fh-arch" d="M34 404A72 72 0 0 1 178 404Z"/>
+            <circle class="fh-ring" cx="96" cy="96" r="22"/>
+          </svg>
+          <img src="assets/species-bog-turtle-cutout.png" alt="">
+        </div>
+        <figcaption>Bog Turtle<span>Glyptemys muhlenbergii</span></figcaption>
+      </figure>
+    </section>
+
+    <!-- 01 · At-risk species (LIVE) -->
+    <section class="section" id="s-species">
+      <div class="section-head"><span class="arch" style="background:var(--olive)"></span><span class="title">01 / at-risk species</span></div>
+      <div class="row">
+        <div class="panel" style="background:var(--lolive)">
+          <div class="deco" style="top:9px;right:-40px;width:246px;height:246px;background:var(--sunset);border-radius:999px"></div>
+          <img class="deco art" src="assets/species-candy-darter-1100.jpg" alt="Candy Darter" style="top:76px;right:-30px;width:292px;transform:rotate(-14deg)">
+          <h2 style="position:relative;color:var(--rojo)">At-risk<br>species</h2>
+          <p class="lede" style="position:relative">Aquatic species, fish, mussels, crayfish, snails, amphibians and others, that NatureServe ranks as critically imperiled, imperiled or vulnerable: G1–G3 globally or S1–S3 within a state. These are conservation-status ranks, not federal or state legal listings.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;position:relative">
+            <div class="stat-pill"><b id="sp-total">##</b><span>at-risk species</span></div>
+            <div class="stat-pill"><span class="pre">across</span><b id="sp-huc">##</b><span>HUC-8 watersheds</span></div>
+            <div class="stat-pill rojo" title="Southeast Regional Species of Greatest Conservation Need"><b id="sp-rsgcn">##</b><span>are also listed as SE RSGCN</span></div>
+          </div>
+          <div class="region-ctx" id="rc-species" hidden><span class="label">Region-wide context</span><span class="txt"></span></div>
+        </div>
+        <div class="figure" style="background:var(--lolive)">
+          <div class="mapwell live" id="species-well" role="img" aria-label="Map of HUC-8 watersheds shaded by at-risk species count, with numbered pins. Details are in the text and table of this section.">
+            <div class="map" id="species-map"></div>
+            <button class="explore" data-viewer="species"><span>⤢</span>Click to explore</button>
+          </div>
+          <div class="figcap">
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between">
+              <div style="display:flex;flex-direction:column;gap:7px;flex:1 1 210px;min-width:0">
+                <div class="label" style="font-size:10.5px">At-risk species per watershed</div>
+                <div class="ramp" id="ramp"></div>
+                <div class="ramp-ticks" id="ramp-ticks"></div>
+              </div>
+              <button class="pill sm" id="btn-map-png" data-noprint title="Prototype: opens the explorer; export coming later"><img src="assets/icon-download.png" alt="">Map</button>
+            </div>
+            <div class="legend-row">
+              <div><span class="sw-line"></span>Reporting boundary</div>
+              <div><span class="sw-dot"></span>Watershed (HUC-8) — click for species</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="about" style="margin-top:22px">
+        <div class="label" style="font-size:10.5px">About this data</div>
+        <p>This species list is created by combining the threatened species list for each watershed that your selection crosses. It is a dataset created by filtering the <a href="https://explorer.natureserve.org/AboutTheData" target="_blank" rel="noopener">NatureServe at-risk species data</a>. Southern Waters filtered by conservation status and has included species that are considered imperiled and/or critically imperiled on a sub-national or global level (G1, G2, G3, S1, S2, S3). A summary of all species included in this dataset can be found <a href="https://www.landscapepartnership.org/networks/working-lands-for-wildlife/landscapes-wildlife/landscapes/aquatics/maps-and-data/aquacorridors-tool-suite/species-in-at-risk-aquatic-species" target="_blank" rel="noopener">here</a>. Generic placeholder entries in the source lists (names beginning with a lowercase article, such as “a cavesnail”) are left out, so counts here can be one lower than the published layer’s for a few watersheds. We have also indicated whether or not those species are listed as Southeast Regional Species of Greatest Conservation Need (SE RSGCN) species using <a href="https://www.landscapepartnership.org/networks/working-lands-for-wildlife/landscapes-wildlife/landscapes/aquatics/workspace/AquaCorridorsToolSuite-Resources/se-rsgcn-data" target="_blank" rel="noopener">this data</a>.</p>
+        <p id="sp-source-note" style="opacity:.85"></p>
+      </div>
+      <div class="tbl-card" style="margin-top:22px">
+        <div class="tbl-toolbar">
+          <div class="filters" id="sp-filters" style="margin:0">
+            <span class="label">Filter</span>
+            <input data-filter="q" placeholder="Search species…">
+            <select data-filter="rsgcn"><option value="all">All species</option><option value="yes">SE RSGCN only</option><option value="no">Not SE RSGCN</option></select>
+            <button class="linkbtn clear" type="button" hidden>Clear filters</button>
+            <div class="seg" id="sp-sort" hidden>
+              <button class="pill sm" data-sort="name" aria-pressed="true">species ↕</button>
+              <button class="pill sm" data-sort="rsgcn" aria-pressed="false">rsgcn ↕</button>
+              <button class="pill sm" data-sort="huc" aria-pressed="false">watersheds ↕</button>
+            </div>
+          </div>
+          <div class="preview-row" style="margin:0;padding:0">
+            <div class="label" id="sp-preview">Showing first 10 species</div>
+            <button class="pill sunset" id="btn-csv"><img src="assets/icon-download.png" alt="">Download full table (CSV)</button>
+          </div>
+        </div>
+        <div class="rows" id="sp-rows"></div>
+      </div>
+      <div class="deco" style="top:-212px;right:30px;width:269px;height:269px;background:var(--cream);border-radius:999px;z-index:1"></div>
+      <img class="deco art" src="assets/species-bog-turtle-1100.jpg" alt="Bog Turtle" style="top:-202px;right:0;width:337px;transform:rotate(9deg);z-index:2">
+    </section>
+
+    <!-- 02a · Organizations (placeholder) -->
+    <section class="section" id="s-partners">
+      <div class="section-head"><span class="arch" style="background:var(--sunset)"></span><span class="title">02 / partnership opportunities</span></div>
+      <p class="lede" style="max-width:70ch;margin-top:-6px">Who to call, what they have done nearby, and where they have said they want to work: organizations and agency offices, partner success stories, and partner priority areas — all for your reporting area. Scroll through the three parts below.</p>
+      <div class="part-preview" aria-label="The three parts of this section">
+        <a href="#sub-orgs" class="circle" style="background:var(--sunset)"><em>02a</em><b id="pv-orgs">…</b><span>organizations &amp; agency offices within 50 mi</span></a>
+        <a href="#sub-stories" class="circle" style="background:var(--olive-deep);color:var(--cream)"><em>02b</em><b id="pv-stories">…</b><span>success stories within 100 mi</span></a>
+        <a href="#sub-priority" class="circle" style="background:var(--terra-deep);color:var(--cream)"><em>02c</em><b id="pv-priority">…</b><span>partner priority layers overlap your area</span></a>
+      </div>
+
+      <div class="subsection" id="sub-orgs">
+        <div class="section-head sub"><span class="arch" style="background:var(--sunset)"></span><span class="title">02a / organizations + agency offices</span></div>
+      <div class="row">
+        <div class="figure" style="background:var(--sunset)">
+          <div class="mapwell live" id="orgs-well" role="img" aria-label="Map of organizations and agency offices near your area. Details are in the text and table of this section.">
+            <div class="map" id="orgs-map"></div>
+            <button class="explore" data-viewer="orgs"><span>⤢</span>Click points to explore</button>
+          </div>
+          <div class="figcap">
+            <div class="legend-row">
+              <div><span class="sw-dot" style="background:var(--rojo)"></span>Organization inside your boundary</div>
+              <div><span class="sw-dot" style="background:var(--olive)"></span>Nearby organization</div>
+              <div><span class="sw-sq" style="background:var(--terra);border-radius:999px;width:16px;height:16px;border:2px solid var(--cream)"></span>Agency office / field staff</div>
+              <div><span class="sw-dot" style="background:var(--ink);opacity:.5;width:11px;height:11px;margin:2.5px"></span>Other offices in the directory</div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+              <div class="label" id="org-note" style="font-size:10.5px">Loading organizations…</div>
+              <button class="pill sm" id="btn-orgs-png" data-noprint><img src="assets/icon-download.png" alt="">Map</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="background:var(--rojo);color:var(--cream)">
+          <h2>Organizations +<br>agency offices</h2>
+          <p class="lede" style="opacity:.9">Conservation organizations from the Landscape Partnership directory plus USFWS and NRCS field staff and state offices, inside or near your reporting area — the starting list for outreach when scoping a project.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <div class="stat-pill" style="color:var(--ink)"><b id="org-inside">…</b><span>orgs inside</span></div>
+            <div class="stat-pill" style="color:var(--ink)"><b id="org-near">…</b><span>within 50 mi</span></div>
+            <div class="stat-pill" style="color:var(--ink)"><b id="org-agency">…</b><span>agency offices</span></div>
+          </div>
+          <div class="contact-card" id="nrcs-contact" hidden>
+            <div class="label" style="font-size:10.5px;opacity:.85">NRCS state office contact</div>
+            <div id="nrcs-contact-body"></div>
+          </div>
+          <div class="region-ctx on-dark" id="rc-orgs" hidden><span class="label">Region-wide context</span><span class="txt"></span></div>
+        </div>
+      </div>
+      <div class="cta">
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 360px">
+          <div style="font-size:19px;font-weight:600;letter-spacing:-.01em;color:var(--rojo)">Do you want your organization to appear here?</div>
+          <p style="font-size:13px;line-height:1.55;max-width:70ch">To have your organization added, register for a membership on the Landscape Partnership Portal. Registering will add your organization to the org map. If you are interested in contributing a success story or priority area, indicate that in the registration form and we will follow up.</p>
+        </div>
+        <a class="pill rojo" href="https://landscapepartnership.org/" target="_blank" rel="noopener" style="flex:none">Register on the Landscape Partnership Portal →</a>
+      </div>
+      <div class="tbl-card" style="margin-top:22px">
+        <div class="tbl-toolbar">
+          <div class="filters" id="org-filters" data-noprint style="margin:0">
+            <span class="label">Filter</span>
+            <input data-filter="q" placeholder="Search organization, city or description…">
+            <select data-filter="scope" data-default="50"><option value="50">Inside + within 50 miles</option><option value="inside">Inside the boundary only</option><option value="100">Inside + within 100 miles</option><option value="all">All organizations in the directory</option></select>
+            <select data-filter="kind"><option value="all">Organizations + agency offices</option><option value="org">Organizations only</option><option value="agency">Agency offices only</option></select>
+            <select data-filter="state"><option value="all">Any state</option></select>
+            <button class="linkbtn clear" type="button" hidden>Clear filters</button>
+          </div>
+          <div class="preview-row" style="margin:0;padding:0">
+            <div class="label" id="org-preview">Loading…</div>
+            <button class="pill sunset" id="btn-orgs-csv" disabled><img src="assets/icon-download.png" alt="">Download full table (CSV)</button>
+          </div>
+        </div>
+        <div class="rows" id="org-rows"></div>
+      </div>
+      <div class="about">
+        <div class="label" style="font-size:10.5px">About this data</div>
+        <p>Organizations come from the <a href="https://www.landscapepartnership.org/networks/organizations" target="_blank" rel="noopener">Landscape Partnership organization directory</a> (<a href="https://services6.arcgis.com/FqSZYgvweBKv4NFt/arcgis/rest/services/LP_organizations_AI_augmentAddresses/FeatureServer" target="_blank" rel="noopener">service</a>), a curated list of conservation partners across the Southeast. Each organization is placed at its headquarters or office address, so this section lists organizations located inside your boundary and, by default, within 50 miles of it — an organization's service area is usually much larger than its office, so treat the nearby list as outreach leads rather than a complete map of who works in your area.</p>
+        <p>Agency offices come from three AquaCorridors layers: <a href="https://services6.arcgis.com/FqSZYgvweBKv4NFt/arcgis/rest/services/AquaCorridors_FeatureLayer_PFWStaff_Locations/FeatureServer/0" target="_blank" rel="noopener">USFWS Partners for Fish and Wildlife staff</a>, <a href="https://services6.arcgis.com/FqSZYgvweBKv4NFt/arcgis/rest/services/AquaCorridors_Shapefile_CP_Staff_Locations/FeatureServer/0" target="_blank" rel="noopener">USFWS Coastal Program staff</a> and <a href="https://services6.arcgis.com/FqSZYgvweBKv4NFt/arcgis/rest/services/NRCS_State_Offices/FeatureServer/0" target="_blank" rel="noopener">USDA NRCS state offices</a>. Staff points are geocoded office addresses; the NRCS state office for each state your boundary touches is always listed, however far away it sits. Some directory addresses were filled in by an AI-assisted lookup (mostly from SAM.gov registrations); those records show a confidence note in the explorer.</p>
+        <p id="org-method" style="opacity:.85"></p>
+      </div>
+          </div>
+
+      <div class="subsection" id="sub-stories">
+        <div class="section-head sub"><span class="arch" style="background:var(--olive)"></span><span class="title">02b / beta: success stories</span></div>
+      <div class="row">
+        <div class="figure" style="background:var(--lolive)">
+          <div class="mapwell live" id="stories-well" role="img" aria-label="Map of success story locations. Details are in the text and table of this section.">
+            <div class="map" id="stories-map"></div>
+            <button class="explore" data-viewer="stories"><span>⤢</span>Click pins to explore</button>
+          </div>
+          <div class="figcap">
+            <div class="legend-row">
+              <div id="st-leg-sw-in"><span class="sw-dot" style="background:var(--rojo)"></span>Southern Waters story inside your boundary</div>
+              <div id="st-leg-sw-near"><span class="sw-dot" style="background:var(--olive)"></span>Southern Waters story nearby</div>
+              <div id="st-leg-ai" hidden><span class="sw-dot" style="background:var(--cream);border:3px solid var(--terra)"></span>AI-assisted research record</div>
+              <div><span class="sw-dot" style="background:var(--ink);opacity:.5;width:11px;height:11px;margin:2.5px"></span>Other stories in the layers switched on</div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+              <div class="label" id="st-note" style="font-size:10.5px">Loading success stories…</div>
+              <button class="pill sm" id="btn-stories-png" data-noprint><img src="assets/icon-download.png" alt="">Map</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="background:var(--olive-deep);color:var(--cream)">
+          <h2>Beta: Success<br>stories</h2>
+          <p class="lede" style="opacity:.95">Restoration projects inside your reporting area or nearby, from three layers you can switch on and off: stories partners have shared with Southern Waters, confirmed partner stories (coming soon), and an AI-assisted research compilation of public project pages. Each card links to its source.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <div class="stat-pill" style="color:var(--ink)"><b id="st-inside">…</b><span>inside</span></div>
+            <div class="stat-pill" style="color:var(--ink)"><b id="st-near">…</b><span>within 100 mi</span></div>
+            <div class="stat-pill" style="color:var(--ink)"><b id="st-all">…</b><span>region-wide</span></div>
+          </div>
+          <div class="region-ctx on-dark" id="rc-stories" hidden><span class="label">Region-wide context</span><span class="txt"></span></div>
+        </div>
+      </div>
+      <div class="cta">
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 360px">
+          <div style="font-size:19px;font-weight:600;letter-spacing:-.01em;color:var(--rojo)">Do you want your success story to appear here?</div>
+          <p style="font-size:13px;line-height:1.55;max-width:70ch">To have your organization added, register for a membership on the Landscape Partnership Portal. Registering will add your organization to the org map. If you are interested in contributing a success story or priority area, indicate that in the registration form and we will follow up.</p>
+        </div>
+        <a class="pill rojo" href="https://landscapepartnership.org/" target="_blank" rel="noopener" style="flex:none">Register on the Landscape Partnership Portal →</a>
+      </div>
+      <div class="pa-toggles st-toggles" id="st-toggles" data-noprint></div>
+      <div class="ai-note" id="st-ai-note" role="note" hidden></div>
+      <div class="filters" id="st-filters" data-noprint>
+        <span class="label">Filter</span>
+        <input data-filter="q" placeholder="Search project name or description…">
+        <select data-filter="scope" data-default="100"><option value="100">Inside + within 100 miles</option><option value="inside">Inside the boundary only</option><option value="all">All stories in the region</option></select>
+        <select data-filter="type"><option value="all">Any project type</option></select>
+        <button class="linkbtn clear" type="button" hidden>Clear filters</button>
+      </div>
+      <div class="preview-row">
+        <div class="label" id="st-preview">Loading…</div>
+        <button class="pill sunset" id="btn-stories-csv" disabled><img src="assets/icon-download.png" alt="">Download full table (CSV)</button>
+      </div>
+      <div class="rows" id="st-rows" style="gap:14px"></div>
+      <div class="about">
+        <div class="label" style="font-size:10.5px">About this data</div>
+        <p>Success stories are submitted by partners through the Southern Waters Success Stories survey (<a href="https://services6.arcgis.com/FqSZYgvweBKv4NFt/arcgis/rest/services/survey123_80372d600dba45a0aa49de5867d22a10_results/FeatureServer" target="_blank" rel="noopener">service</a>) and reviewed by the Southern Waters team. Each record has a project location, name, description, type (completed, featured or upcoming), a link to the write-up on the Landscape Partnership site, any additional publicity, and photos attached to the survey response.</p>
+        <p>The program is young and the story list is short, so this section shows projects inside your boundary plus those within 100 miles by default, and lets you widen to every story in the program. Project leads, partners, county and biome are not yet collected by the survey and appear as placeholders. Have a project to share? <a href="https://www.landscapepartnership.org/networks/working-lands-for-wildlife/landscapes-wildlife/landscapes/aquatics" target="_blank" rel="noopener">Submit it through Southern Waters</a>.</p>
+        <p id="st-ai-method"></p>
+        <p id="st-method" style="opacity:.85"></p>
+      </div>
+          </div>
+
+      <div class="subsection" id="sub-priority">
+        <div class="section-head sub"><span class="arch" style="background:var(--terra)"></span><span class="title">02c / priority area boundaries</span></div>
+      <div class="row">
+        <div class="panel" style="background:var(--sunset)">
+          <h2 style="color:var(--rojo)">Partner focus or<br>priority areas</h2>
+          <p class="lede">Priority layers published by federal agencies and partnerships that overlap your reporting area. Each row is one partner layer: who is behind it, what it represents, and how much of your area it covers. Click a boundary on the map to see which layer it belongs to; use the toggles above the table to switch layers on or off.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <div class="stat-pill"><b id="pa-layers">…</b><span>layers overlap, of <b id="pa-total" style="font-size:inherit;font-weight:600;opacity:1">…</b> layers in our database</span></div>
+            <div class="stat-pill rojo"><b id="pa-pct">…</b><span>of your area in ≥1 priority layer</span></div>
+          </div>
+          <div class="region-ctx" id="rc-priority" hidden><span class="label">Region-wide context</span><span class="txt"></span></div>
+        </div>
+        <div class="figure" style="background:var(--terra)">
+          <div class="mapwell live" id="priority-well" role="img" aria-label="Map of partner priority areas overlapping your area. Details are in the text and table of this section.">
+            <div class="map" id="priority-map"></div>
+            <button class="explore" data-viewer="priority"><span>⤢</span>Click areas to explore</button>
+          </div>
+          <div class="figcap">
+            <div class="legend-row" id="pa-legend" style="color:var(--cream)"></div>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+              <div class="label" id="pa-note" style="font-size:10.5px;color:var(--cream);opacity:1">Loading partner priority layers…</div>
+              <button class="pill sm" id="btn-priority-png" data-noprint><img src="assets/icon-download.png" alt="">Map</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cta">
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 360px">
+          <div style="font-size:19px;font-weight:600;letter-spacing:-.01em;color:var(--rojo)">Do you want your organization's priority layer to appear here?</div>
+          <p style="font-size:13px;line-height:1.55;max-width:70ch">To have your organization added, register for a membership on the Landscape Partnership Portal. Registering will add your organization to the org map. If you are interested in contributing a success story or priority area, indicate that in the registration form and we will follow up.</p>
+        </div>
+        <a class="pill rojo" href="https://landscapepartnership.org/" target="_blank" rel="noopener" style="flex:none">Register on the Landscape Partnership Portal →</a>
+      </div>
+      <div class="tbl-card" style="margin-top:22px">
+        <div class="tbl-toolbar">
+          <div class="pa-toggles" id="pa-toggles" data-noprint></div>
+          <div class="filters" id="pa-filters" data-noprint style="margin:0">
+            <span class="label">Filter</span>
+            <input data-filter="q" placeholder="Search organization or layer…">
+            <select data-filter="type"><option value="all">Any organization type</option><option value="Federal Agency">Federal Agency</option><option value="State Agency">State Agency</option><option value="Chapter/Branch of NGO">Chapter/Branch of NGO</option><option value="Local Non-Profit">Local Non-Profit</option><option value="Academic">Academic</option><option value="Private">Private</option></select>
+            <button class="linkbtn clear" type="button" hidden>Clear filters</button>
+          </div>
+          <div class="preview-row" style="margin:0;padding:0">
+            <div class="label" id="pa-preview">Loading…</div>
+            <button class="pill sunset" id="btn-priority-csv" disabled><img src="assets/icon-download.png" alt="">Download full table (CSV)</button>
+          </div>
+        </div>
+        <div class="rows" id="pa-rows"></div>
+      </div>
+      <div class="about">
+        <div class="label" style="font-size:10.5px">About this data</div>
+        <p>Priority area boundaries are the polygon layers in the <em>Priority Area Layers</em> group of the <a href="https://fergusonlynch.maps.arcgis.com/home/item.html?id=1239691bfde647e7a3e0b8bbbebfebd0" target="_blank" rel="noopener">AquaCorridors Mapper web map</a>: U.S. Forest Service priority watersheds, SARP Conservation Opportunity Areas, USDA NRCS Aquatic Connectivity Framework priority areas, USDA NWQI planning watersheds, USFWS Partners for Fish and Wildlife and Coastal Program focus areas, and Sentinel Landscapes. Each partner publishes and maintains its own layer; the organization details in the table are written by Southern Waters to describe them.</p>
+        <p>Coverage is computed by intersecting each layer's features with your boundary. Layers that overlap your area are switched on by default and drawn in full around it (strong fills touch your boundary, light fills are the rest of the layer nearby); layers with nothing inside are switched off. The toggles above the table turn any layer on or off, and the map, the table and the explorer follow. Layers that require an ArcGIS sign-in cannot be read here and are marked as such.</p>
+        <p id="pa-method" style="opacity:.85"></p>
+      </div>
+      </div>
+    </section>
+
+    <!-- 03 · SECAS (placeholder) -->
+    <section class="section" id="s-secas">
+      <div class="section-head"><span class="arch" style="background:var(--terra)"></span><span class="title">03 / secas blueprint</span></div>
+      <div class="row">
+        <div class="figure" style="background:var(--terra)">
+          <div class="mapwell live" id="secas-well" role="img" aria-label="Map of SECAS Blueprint priority classes around your area. Details are in the text and table of this section.">
+            <div class="map" id="secas-map"></div>
+            <button class="explore" data-viewer="secas"><span>⤢</span>Click to explore</button>
+          </div>
+          <div class="figcap">
+            <div class="legend-row" id="bp-legend"></div>
+            <div class="filters" id="bp-filters" data-noprint style="margin-top:4px"><span class="label" style="color:var(--cream);opacity:1">Show on map</span><div class="seg" id="bp-classes"></div></div>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+              <div class="label" id="bp-note" style="font-size:10.5px;color:var(--cream);opacity:1">Loading the Blueprint…</div>
+              <button class="pill sm" id="btn-secas-png" data-noprint><img src="assets/icon-download.png" alt="">Map</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="panel arch-panel" style="background:var(--lolive);flex:1 1 auto">
+            <h2 style="color:var(--rojo)">SECAS<br>blueprint</h2>
+            <p class="lede">The Southeast Conservation Blueprint ranks lands and waters by their contribution to a connected network of healthy ecosystems. Shading shows priority class within and around the reporting area; the figures are acres inside your boundary.</p>
+            <a href="https://secassoutheast.org/blueprint" target="_blank" rel="noopener" style="font-size:13px;font-weight:600">Explore the Blueprint →</a>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px" id="secas-stats">
+            <div class="stat small" style="background:var(--rojo);color:var(--cream)"><div class="n" id="bp-pct-4">…</div><div class="label">Highest priority · <span id="bp-ac-4">—</span> acres</div></div>
+            <div class="stat small" style="background:var(--sunset)"><div class="n" id="bp-pct-3">…</div><div class="label">High priority · <span id="bp-ac-3">—</span> acres</div></div>
+            <div class="stat small" style="background:var(--lolive)"><div class="n" id="bp-pct-2">…</div><div class="label">Medium priority · <span id="bp-ac-2">—</span> acres</div></div>
+            <div class="stat small" style="background:var(--paper)"><div class="n" id="bp-pct-1">…</div><div class="label">Priority connections · <span id="bp-ac-1">—</span> acres</div></div>
+          </div>
+          <div style="background:var(--paper);border-radius:20px;padding:14px 18px;display:flex;flex-direction:column;gap:8px">
+            <div class="label" style="font-size:10.5px">Share of your area by Blueprint class</div>
+            <div class="bp-bar" id="bp-bar"></div>
+            <div class="mono" style="font-size:10px;opacity:.85" id="bp-bar-note"></div>
+            <div class="region-ctx" id="rc-secas" hidden><span class="label">Region-wide context</span><span class="txt"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="about">
+        <div class="label" style="font-size:10.5px">About this data</div>
+        <p>The Southeast Conservation Blueprint is a living, spatial plan to achieve the SECAS vision of a connected network of lands and waters across the Southeast and Caribbean. It identifies priority areas based on a suite of natural and cultural resource indicators representing terrestrial, freshwater, and marine ecosystems. A connectivity analysis identifies corridors that link coastal and inland areas and span climate gradients. So far, more than 2,000 people from over 600 organizations have actively participated in developing the Blueprint. Source: <a href="https://secassoutheast.org/blueprint" target="_blank" rel="noopener">secassoutheast.org/blueprint</a>.</p>
+        <p>The Blueprint 2025 is a 30-metre raster. Each cell is ranked <b>highest</b>, <b>high</b> or <b>medium priority</b> for the connected network, or flagged as a <b>priority connection</b> (a corridor); everything else is <b>lower priority</b>. This report reads it from the <a href="https://tiledimageservices.arcgis.com/QVENGdaPbd4LUkLV/arcgis/rest/services/Southeast_Conservation_Blueprint_2025/ImageServer" target="_blank" rel="noopener">SECAS Blueprint 2025 image service</a>.</p>
+        <p id="bp-method">Acres are computed here in the browser by overlaying your boundary on the Blueprint raster tiles and summing the cells of each class, corrected for map-projection scale at your latitude. Percentages are shares of the area inside your boundary.</p>
+        <p style="opacity:.85"><i>Note. The analysis, maps, and data on this site are for conservation planning purposes and are not for regulatory decisions. Data should not be transferred to a third party, in data or map form, without noting these disclaimers and providing the accompanying metadata.</i></p>
+      </div>
+    </section>
+
+    <!-- 04 · Impaired waterways (placeholder) -->
+    <section class="section" id="s-waters">
+      <div class="section-head"><span class="arch" style="background:var(--lolive)"></span><span class="title">04 / impaired waterways (303d)</span></div>
+      <div class="row">
+        <div class="panel" style="background:var(--lolive)">
+          <h2 style="color:var(--rojo)">Impaired<br>waterways</h2>
+          <p class="lede">Assessed waters inside your area of interest from EPA's ATTAINS database, flagged where a designated use is impaired and where the water appears on the Clean Water Act §303(d) list. Streams, lakes and point features are combined into one list of assessment units.</p>
+        </div>
+        <div class="figure" style="background:var(--rojo)">
+          <div class="mapwell live" id="waters-well" role="img" aria-label="Map of assessed and impaired waters in your area. Details are in the text and table of this section.">
+            <div class="map" id="waters-map"></div>
+            <button class="explore" data-viewer="waters"><span>⤢</span>Click to explore</button>
+          </div>
+          <div class="figcap">
+            <div class="legend-row" style="color:var(--cream)">
+              <div><span class="sw-line" style="border-color:var(--rojo);border-top-width:4px"></span>Impaired</div>
+              <div><span class="sw-line" style="border-color:var(--olive)"></span>Meets standards</div>
+              <div><span class="sw-line" style="border-color:#9a9a9a;border-top-style:dashed"></span>Not assessed</div>
+              <div><span class="sw-sq" style="background:rgba(174,67,30,.45);border:1.5px solid var(--rojo)"></span>Lake / reservoir</div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+              <div class="label" id="wq-note" style="font-size:10.5px;color:var(--cream);opacity:1">Loading ATTAINS…</div>
+              <button class="pill sm" id="btn-waters-png" data-noprint><img src="assets/icon-download.png" alt="">Map</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px" id="wq-stats">
+        <div class="stat small" style="background:var(--paper)"><div class="n" id="wq-units">…</div><div class="label">Assessed waters</div></div>
+        <div class="stat small" style="background:var(--sunset)"><div class="n" id="wq-impaired">…</div><div class="label">Impaired waters</div></div>
+        <div class="stat small" style="background:var(--terra);color:var(--cream)"><div class="n" id="wq-listed">…</div><div class="label">On 303(d) list</div></div>
+        <div class="stat small" style="background:var(--lolive)"><div class="n" id="wq-pct-impaired">…</div><div class="label">% impaired</div></div>
+        <div class="stat small" style="background:var(--rojo);color:var(--cream)"><div class="n" id="wq-pct-listed">…</div><div class="label">% listed 303(d)</div></div>
+        <div class="stat small" style="background:var(--olive);color:var(--cream)"><div class="n" id="wq-miles">…</div><div class="label">Impaired stream miles</div></div>
+        <div class="stat small" style="background:var(--ink);color:var(--cream)"><div class="n" id="wq-acres">…</div><div class="label">Impaired lake / reservoir acres</div></div>
+      </div>
+      <div class="region-ctx wide" id="rc-waters" hidden><span class="label">Region-wide context</span><span class="txt"></span></div>
+      <div class="tbl-card" style="margin-top:22px">
+        <div class="tbl-toolbar">
+          <div class="filters" id="wq-filters" data-noprint style="margin:0">
+            <span class="label">Filter</span>
+            <input data-filter="q" placeholder="Search waterbody or ID…">
+            <select data-filter="status"><option value="all">Any status</option><option value="impaired">Impaired</option><option value="listed">On 303(d) list</option><option value="meets">Meets standards</option><option value="na">Not assessed</option></select>
+            <select data-filter="type"><option value="all">Streams, lakes and points</option><option value="line">Streams / rivers</option><option value="area">Lakes / reservoirs</option><option value="point">Point features</option></select>
+            <select data-filter="cause"><option value="all">Any cause</option></select>
+            <select data-filter="use"><option value="all">Any impaired use</option><option value="Ecological use">Ecological use impaired</option><option value="Fish consumption">Fish consumption impaired</option><option value="Recreational use">Recreational use impaired</option><option value="Drinking water">Drinking water impaired</option></select>
+            <button class="linkbtn clear" type="button" hidden>Clear filters</button>
+          </div>
+          <div class="preview-row" style="margin:0;padding:0">
+            <div class="label" id="wq-preview">Loading…</div>
+            <button class="pill sunset" id="btn-waters-csv" disabled><img src="assets/icon-download.png" alt="">Download full table (CSV)</button>
+          </div>
+        </div>
+        <div class="rows" id="wq-rows"></div>
+      </div>
+      <div class="about">
+        <div class="label" style="font-size:10.5px">About this data</div>
+        <p>This data is from the EPA's ATTAINS dataset (Assessment, Total Maximum Daily Load Tracking and Implementation System), which provides a comprehensive view of water quality assessments and TMDL data across the United States. It tracks impaired waters — those that fail to meet water quality standards — and documents state-reported efforts to restore these waters through TMDLs. Source: <a href="https://www.epa.gov/waterdata/attains" target="_blank" rel="noopener">EPA</a>, read live from the <a href="https://gispub.epa.gov/arcgis/rest/services/OW/ATTAINS_Assessment/MapServer" target="_blank" rel="noopener">ATTAINS Assessment map service</a>.</p>
+        <p>States and tribes draw their assessment units differently — most report streams as lines and lakes as polygons, but some report lakes, springs or beaches as points — so this report queries all three ATTAINS geometry layers and combines them by assessment unit. Each water appears once in the table no matter how many map segments it has. Impaired stream miles and lake acres are the portions of impaired units that fall inside your boundary. Each unit carries its organization's most recent reporting cycle, so cycles can differ between states.</p>
+        <p id="wq-method" style="opacity:.85"></p>
+        <p>Explore more with the <a href="https://mywaterway.epa.gov/" target="_blank" rel="noopener">EPA's How's My Waterway tool</a>.</p>
+      </div>
+    </section>
+
+    <!-- 05 · Barriers (placeholder) -->
+    <section class="section" id="s-barriers">
+      <div class="section-head"><span class="arch" style="background:var(--olive)"></span><span class="title">05 / dams + road crossings (sarp)</span></div>
+      <div class="row">
+        <div class="figure" style="background:var(--olive)">
+          <div class="mapwell live" id="barriers-well" role="img" aria-label="Map of dams and road crossings in your area. Details are in the text and table of this section.">
+            <div class="map" id="barriers-map"></div>
+            <button class="explore" data-viewer="barriers"><span>⤢</span>Click to explore</button>
+          </div>
+          <div class="figcap">
+            <div class="legend-row" style="color:var(--cream)">
+              <div><span class="sw-dot" style="background:var(--rojo)"></span>Dam · rated</div>
+              <div><span class="sw-dot" style="background:transparent;border:2px solid var(--rojo)"></span>Dam · not assessed</div>
+              <div><span class="sw-dot" style="background:var(--sunset)"></span>Road crossing</div>
+              <div><span class="sw-dot" style="background:var(--ink)"></span>Crossing · severe / significant</div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+              <div class="label" id="bar-note" style="font-size:10.5px;color:var(--cream);opacity:1">Loading the barrier inventory…</div>
+              <button class="pill sm" id="btn-barriers-png" data-noprint><img src="assets/icon-download.png" alt="">Map</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="panel" style="background:var(--terra-deep);color:var(--cream);flex:1 1 auto">
+            <h2>Dams +<br>road crossings</h2>
+            <p class="lede" style="opacity:.92">Aquatic barriers inside your boundary from the Southeast Aquatic Resources Partnership's National Aquatic Barrier Inventory: dams with their barrier severity and removal feasibility, and assessed road–stream crossings with their potential-project rating.</p>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+            <div class="stat small" style="background:var(--sunset)"><div class="n" id="bar-dams">…</div><div class="label">Dams</div></div>
+            <div class="stat small" style="background:var(--lolive)"><div class="n" id="bar-xings">…</div><div class="label">Assessed road crossings</div></div>
+            <div class="stat small" style="background:var(--rojo);color:var(--cream)"><div class="n" id="bar-assessed">…</div><div class="label">Dams with a severity rating</div></div>
+            <div class="stat small" style="background:var(--ink);color:var(--cream)"><div class="n" id="bar-severe">…</div><div class="label">Crossings rated severe or significant</div></div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:28px">Dams</h3>
+      <div class="region-ctx wide" id="rc-barriers" hidden><span class="label">Region-wide context</span><span class="txt"></span></div>
+      <div class="tbl-card" style="margin-top:22px">
+        <div class="tbl-toolbar">
+          <div class="filters" id="dam-filters" data-noprint style="margin:0">
+            <span class="label">Filter</span>
+            <input data-filter="q" placeholder="Search dam, river or county…">
+            <select data-filter="severity"><option value="all">Any barrier severity</option><option value="complete">Complete barrier</option><option value="partial">Partial or seasonal</option><option value="none">No barrier</option><option value="na">Not assessed</option></select>
+            <select data-filter="feas"><option value="all">Any feasibility</option><option value="feasible">Likely or possibly feasible</option><option value="infeasible">Infeasible / no benefit</option><option value="done">Removed, planned or passage installed</option><option value="na">Not assessed / unknown</option></select>
+            <button class="linkbtn clear" type="button" hidden>Clear filters</button>
+          </div>
+          <div class="preview-row" style="margin-top:6px">
+            <div class="label" id="dam-preview">Loading…</div>
+            <button class="pill sunset" id="btn-dams-csv" disabled><img src="assets/icon-download.png" alt="">Download full table (CSV)</button>
+          </div>
+        </div>
+        <div class="rows" id="dam-rows"></div>
+      </div>
+
+      <h3 style="margin-top:28px">Road crossings</h3>
+      <div class="tbl-card" style="margin-top:22px">
+        <div class="tbl-toolbar">
+          <div class="filters" id="xing-filters" data-noprint style="margin:0">
+            <span class="label">Filter</span>
+            <input data-filter="q" placeholder="Search road, stream or county…">
+            <select data-filter="project"><option value="all">Any potential-project rating</option><option value="severe">Severe barrier</option><option value="significant">Significant barrier</option><option value="moderate">Moderate barrier</option><option value="potential">Potential or proposed project</option><option value="minor">Minor, insignificant or small</option><option value="none">No barrier / passable</option><option value="other">Other / unassessed</option></select>
+            <select data-filter="type"><option value="all">Any crossing type</option></select>
+            <button class="linkbtn clear" type="button" hidden>Clear filters</button>
+          </div>
+          <div class="preview-row" style="margin-top:6px">
+            <div class="label" id="xing-preview">Loading…</div>
+            <button class="pill sunset" id="btn-xings-csv" disabled><img src="assets/icon-download.png" alt="">Download full table (CSV)</button>
+          </div>
+        </div>
+        <div class="rows" id="xing-rows"></div>
+      </div>
+
+      <div class="about">
+        <div class="label" style="font-size:10.5px">About this data</div>
+        <p>Both layers come from the Southeast Aquatic Resources Partnership's (SARP) <a href="https://aquaticbarriers.org" target="_blank" rel="noopener">National Aquatic Barrier Inventory</a>. <b>Dams</b> come from SARP's inventory as compiled for Southern Waters in August 2026 (<a href="https://services6.arcgis.com/FqSZYgvweBKv4NFt/arcgis/rest/services/SARP_barriers_swf_08042026/FeatureServer/0" target="_blank" rel="noopener">service</a>): passability (used here as barrier severity), removal feasibility, owner type and the count of threatened or endangered species upstream. <b>Road crossings</b> are SARP's assessed road–stream crossings with their potential-project rating and crossing type</p>
+        <p id="bar-method" style="opacity:.85">Points are selected where they fall inside your boundary. Tables are sorted worst-first: dams by barrier severity, crossings by potential-project rating.</p>
+      </div>
+    </section>
+
+    <!-- 06 · Drought -->
+    <section class="section" id="s-drought">
+      <div class="section-head"><span class="arch" style="background:var(--sunset)"></span><span class="title">06 / drought (u.s. drought monitor)</span></div>
+      <div class="row">
+        <div class="panel" style="background:var(--lolive)">
+          <h2 style="color:var(--rojo)">Drought</h2>
+          <p class="lede">Current drought intensity inside your area from the U.S. Drought Monitor, plus how often the area has been in drought over the last five years. Drought stress compounds every other pressure on aquatic species and water quality.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <div class="stat-pill"><b id="dr-pct">…</b><span>in drought now</span></div>
+            <div class="stat-pill"><b id="dr-worst">…</b><span>most severe class</span></div>
+          </div>
+          <div class="label" id="dr-asof" style="font-size:10.5px">Loading…</div>
+        </div>
+        <div class="figure" style="background:var(--sunset)">
+          <div class="mapwell live" id="drought-well" role="img" aria-label="Map of current drought classes and streamflow gages around your area. Details are in the text and table of this section.">
+            <div class="map" id="drought-map"></div>
+            <button class="explore" data-viewer="drought"><span>⤢</span>Click to explore</button>
+          </div>
+          <div class="figcap">
+            <div class="legend-row" id="dr-legend"></div>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+              <div class="label" id="dr-note" style="font-size:10.5px">Loading the Drought Monitor…</div>
+              <button class="pill sm" id="btn-drought-png" data-noprint><img src="assets/icon-download.png" alt="">Map</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px" id="dr-stats">
+        <div class="stat small" style="background:var(--paper)"><div class="n" id="dr-d0">…</div><div class="label">Abnormally dry or worse (D0+)</div></div>
+        <div class="stat small" style="background:var(--sunset)"><div class="n" id="dr-d1">…</div><div class="label">In drought (D1+) · acres</div></div>
+        <div class="stat small" style="background:var(--terra);color:var(--cream)"><div class="n" id="dr-d2">…</div><div class="label">Severe or worse (D2+) · acres</div></div>
+        <div class="stat small" style="background:var(--rojo);color:var(--cream)"><div class="n" id="dr-weeks">…</div><div class="label">Weeks in drought · last 5 years</div></div>
+        <div class="stat small" style="background:var(--olive);color:var(--cream)"><div class="n" id="dr-run">…</div><div class="label">Longest drought spell · weeks</div></div>
+        <div class="stat small" style="background:var(--ink);color:var(--cream)"><div class="n" id="dr-peak">…</div><div class="label">Worst week · % in drought</div></div>
+      </div>
+      <div style="margin-top:14px;background:var(--paper);border-radius:20px;padding:16px 18px 12px;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px"><div class="label" style="font-size:10.5px">Share of your area by drought class · weekly, last 10 years</div><div class="label" id="dr-chart-note" style="font-size:10.5px"></div></div>
+        <div id="dr-chart" style="width:100%;height:110px"></div>
+        <div class="legend-row" id="dr-chart-legend" style="font-size:10.5px"></div>
+      </div>
+      <div class="row" style="margin-top:22px" id="dr-extra">
+        <div class="panel" style="background:var(--paper);flex:1.3 1 380px;min-width:min(100%,320px)">
+          <div class="label" style="font-size:10.5px">Streamflow right now · USGS gages</div>
+          <div id="gage-summary" style="font-size:15px;font-weight:600;margin-top:6px;line-height:1.35">Loading gages…</div>
+          <div class="legend-row" id="gage-legend" style="margin-top:10px;font-size:10.5px"></div>
+          <div class="rows" id="gage-rows" style="margin-top:12px;gap:8px"></div>
+          <div class="mono" id="gage-note" style="font-size:10px;opacity:.85;margin-top:10px"></div>
+        </div>
+        <div class="panel" style="background:var(--paper);flex:1 1 300px;min-width:min(100%,280px)">
+          <div class="label" style="font-size:10.5px">Drought outlook · NOAA Climate Prediction Center</div>
+          <div id="outlook-body" style="margin-top:6px;display:flex;flex-direction:column;gap:14px;font-size:13px;line-height:1.45">Loading outlook…</div>
+        </div>
+      </div>
+      <div class="region-ctx wide" id="rc-drought" hidden><span class="label">Region-wide context</span><span class="txt"></span></div>
+      <div class="tbl-card" style="margin-top:22px">
+        <div class="tbl-toolbar">
+          <div class="filters" id="dr-filters" data-noprint style="margin:0">
+            <span class="label">Filter</span>
+            <input data-filter="q" placeholder="Search county…">
+            <select data-filter="state"><option value="all">Any state</option></select>
+            <select data-filter="now"><option value="all">Any current condition</option><option value="drought">In drought now (D1+)</option><option value="dry">Abnormally dry or worse (D0+)</option><option value="none">No drought now</option></select>
+            <button class="linkbtn clear" type="button" hidden>Clear filters</button>
+          </div>
+          <div class="preview-row" style="margin:0;padding:0">
+            <div class="label" id="dr-preview">Loading…</div>
+            <button class="pill sunset" id="btn-drought-csv" disabled><img src="assets/icon-download.png" alt="">Download full table (CSV)</button>
+          </div>
+        </div>
+        <div class="rows" id="dr-rows"></div>
+      </div>
+      <div class="about">
+        <div class="label" style="font-size:10.5px">About this data</div>
+        <p>The <a href="https://droughtmonitor.unl.edu/" target="_blank" rel="noopener">U.S. Drought Monitor</a> (USDM) is produced weekly by the National Drought Mitigation Center, USDA and NOAA. It classifies drought intensity from D0 (abnormally dry) through D1 moderate, D2 severe, D3 extreme and D4 exceptional drought, blending precipitation, soil moisture, streamflow and local expert input. This report reads Esri's <a href="https://www.arcgis.com/home/item.html?id=9731f9062afd45f2be7b3bf2e050fbfa" target="_blank" rel="noopener">USA Drought Intensity 2000 – Present</a> live feed (<a href="https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/US_Drought_Intensity_v1/FeatureServer" target="_blank" rel="noopener">service</a>), updated every Thursday.</p>
+        <p>Current acres and the history both come from the USDM's weekly county statistics: for every county touching your boundary, the share of the county in each class is weighted by the acres of that county inside your boundary ("D1+" means moderate drought or worse). The map draws the USDM polygons themselves. "In drought" in the history means at least half of your area was in D1 or worse that week.</p>
+        <p>Streamflow comes from USGS gages inside (or, when none, nearest to) your boundary: the latest discharge from the <a href="https://api.waterdata.usgs.gov/ogcapi/v0/collections/latest-continuous" target="_blank" rel="noopener">USGS Water Data OGC API</a> compared with that gage’s daily percentiles for today’s date (<a href="https://waterservices.usgs.gov/docs/statistics/" target="_blank" rel="noopener">NWIS daily statistics</a>), using the WaterWatch classes: much below normal (under the 10th percentile), below (10–25th), normal (25–75th), above (75–90th), much above (over the 90th). Gages without a current reading or a long enough record are skipped. The drought outlook is NOAA’s Climate Prediction Center <a href="https://www.cpc.ncep.noaa.gov/products/expert_assessment/sdo_summary.php" target="_blank" rel="noopener">seasonal</a> and <a href="https://www.cpc.ncep.noaa.gov/products/expert_assessment/mdo_summary.php" target="_blank" rel="noopener">monthly</a> drought outlooks (<a href="https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/cpc_drought_outlk/MapServer" target="_blank" rel="noopener">service</a>), clipped to your boundary and reported as the share of your area under each outlook category.</p>
+        <p id="dr-method" style="opacity:.85"></p>
+      </div>
+    </section>
+
+    <!-- 07 · Agriculture (2022 Census of Agriculture) -->
+    <section class="section" id="s-ag">
+      <div class="section-head"><span class="arch" style="background:var(--lolive)"></span><span class="title">07 / agriculture (2022 census of agriculture)</span></div>
+      <div class="row">
+        <div class="panel" style="background:var(--sunset)">
+          <h2 style="color:var(--rojo)">Working<br>lands</h2>
+          <p class="lede">How much of your area is farmland, what it grows and what it earns, from USDA’s 2022 Census of Agriculture. The data is published by county, so each county’s values are apportioned by the share of that county inside your boundary.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <div class="stat-pill"><b id="ag-farms">…</b><span>farms</span></div>
+            <div class="stat-pill"><b id="ag-landpct">…</b><span>of land is in farms</span></div>
+            <div class="stat-pill"><b id="ag-croppct">…</b><span>of land is cropland</span></div>
+            <div class="stat-pill rojo"><b id="ag-income">…</b><span>net cash farm income</span></div>
+          </div>
+          <div class="region-ctx" id="rc-ag" hidden><span class="label">Region-wide context</span><span class="txt"></span></div>
+        </div>
+        <div class="figure" style="background:var(--lolive)">
+          <div class="mapwell live" id="ag-well" role="img" aria-label="Map of counties around your area shaded by the share of land in farms. Details are in the text and table of this section.">
+            <div class="map" id="ag-map"></div>
+            <button class="explore" data-viewer="ag"><span>⤢</span>Click counties to explore</button>
+          </div>
+          <div class="figcap">
+            <div class="legend-row" id="ag-legend"></div>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+              <div class="label" id="ag-note" style="font-size:10.5px">Loading the Census of Agriculture…</div>
+              <button class="pill sm" id="btn-ag-png" data-noprint><img src="assets/icon-download.png" alt="">Map</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px" id="ag-stats">
+        <div class="stat small" style="background:var(--paper)"><div class="n" id="ag-counties">…</div><div class="label">Counties in your area</div></div>
+        <div class="stat small" style="background:var(--sunset)"><div class="n" id="ag-pasture">…</div><div class="label">Pastureland · % of farmland</div></div>
+        <div class="stat small" style="background:var(--lolive)"><div class="n" id="ag-harvested">…</div><div class="label">Harvested cropland · % of farmland</div></div>
+        <div class="stat small" style="background:var(--paper)"><div class="n" id="ag-irrigated">…</div><div class="label">Irrigated · % of farmland</div></div>
+        <div class="stat small" style="background:var(--olive);color:var(--cream)"><div class="n" id="ag-small">…</div><div class="label">Farms selling under $10,000</div></div>
+        <div class="stat small" style="background:var(--terra-deep);color:var(--cream)"><div class="n" id="ag-large">…</div><div class="label">Farms selling $250,000 or more</div></div>
+        <div class="stat small" style="background:var(--ink);color:var(--cream)"><div class="n" id="ag-perfarm">…</div><div class="label">Net cash income · avg per farm</div></div>
+      </div>
+      <div class="about" style="margin-top:22px">
+        <div class="label" style="font-size:10.5px">About this data</div>
+        <p>County-level results of USDA’s <a href="https://www.nass.usda.gov/AgCensus/" target="_blank" rel="noopener">2022 Census of Agriculture</a> (National Agricultural Statistics Service), as published in the <a href="https://www.nass.usda.gov/Publications/AgCensus/2022/Online_Resources/Ag_Census_Web_Maps/index.php" target="_blank" rel="noopener">Ag Census Web Maps</a> dataset and joined to the counties of the Southern Waters programmatic boundary. Variables: number of farms; land in farms and total cropland as a percent of county land area; irrigated land, harvested cropland and pastureland as a percent of land in farms; farms by value of sales; net cash farm income of operations and of producers (total and average per farm); and total income from farm-related sources per farm.</p>
+        <p>The census is reported by county, not by watershed or drawn area. Each county that intersects your boundary is weighted by the share of its area that falls inside: counts and dollar totals are multiplied by that share, and percentages are averaged across counties weighted by the land inside your boundary (sales-class percentages are weighted by farms). A small area therefore inherits the values of the county or counties around it. Values NASS withholds to avoid disclosing individual operations appear as “—”. Counties whose overlap with your area is under 100 acres are left out.</p>
+        <p id="ag-method" style="opacity:.85"></p>
+      </div>
+      <div class="tbl-card" style="margin-top:22px">
+        <div class="tbl-toolbar">
+          <div class="filters" id="ag-filters" data-noprint style="margin:0">
+            <span class="label">Filter</span>
+            <input data-filter="q" placeholder="Search county…">
+            <select data-filter="state"><option value="all">Any state</option></select>
+            <select data-filter="share"><option value="all">Any overlap</option><option value="25">At least 25% inside your area</option><option value="50">At least 50% inside your area</option><option value="90">At least 90% inside your area</option></select>
+            <button class="linkbtn clear" type="button" hidden>Clear filters</button>
+          </div>
+          <div class="preview-row" style="margin:0;padding:0">
+            <div class="label" id="ag-preview">Loading…</div>
+            <button class="pill sunset" id="btn-ag-csv" disabled><img src="assets/icon-download.png" alt="">Download full table (CSV)</button>
+          </div>
+        </div>
+        <div class="rows" id="ag-rows"></div>
+      </div>
+    </section>
+
+    <section class="section" id="appendix" aria-hidden="true">
+      <div class="section-head"><span class="arch" style="background:var(--sunset)"></span><span class="title">Appendix / about the data</span></div>
+      <div id="appendix-body" style="display:flex;flex-direction:column;gap:14px"></div>
+    </section>
+
+    <div class="footer" role="contentinfo">
+      <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+        <span class="logo-pill"><img src="assets/wlfw-southern-waters-logo-white.png" alt="Working Lands for Wildlife — Southern Waters"></span>
+        <span class="label" style="opacity:1;color:var(--cream);font-size:10.5px">Prototype · placeholders shown as ###</span>
+      </div>
+      <div class="mono" style="font-size:10.5px;letter-spacing:.12em;opacity:.85" id="generated-on-2"></div>
+      <div class="cite">
+        <div style="flex:1 1 420px;min-width:0"><div class="label" style="font-size:10.5px;opacity:.85;margin-bottom:4px">How to cite this report</div><p id="cite-text">Generate a report to see its citation.</p>
+          <p class="mono" style="font-size:10.5px;opacity:.85;margin-top:6px">Quote individual figures with their own source (listed in the appendix with last-updated dates); this report compiles them and is not itself the primary source.</p></div>
+        <button class="pill sm" id="btn-cite" type="button" data-noprint>Copy citation</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MAP EXPLORER (modal)                                          -->
+<!-- ============================================================ -->
+<div id="viewer" hidden data-noprint>
+  <div class="box">
+    <div class="bar">
+      <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+        <div class="eyebrow" id="v-eyebrow"></div>
+        <div class="t" id="v-title"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="pill sm sunset" id="v-reset">Reset</button>
+        <button class="pill sm ghost" id="v-close">Close ✕</button>
+      </div>
+    </div>
+    <div class="body">
+      <div class="vmap">
+        <div class="map" id="viewer-map"></div>
+        <div class="static" id="viewer-static" hidden style="position:absolute;inset:0;background-size:cover;background-position:center"></div>
+        <div class="hint">Drag to pan · scroll to zoom</div>
+      </div>
+      <div class="side" id="v-side"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/togeojson/0.16.0/togeojson.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/shpjs@4.0.4/dist/shp.js"></script>
+<script src="vendor/LercDecode.min.js"></script>
+<script src="app.js?v=94"></script>
+</body>
+</html>
